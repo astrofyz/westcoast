@@ -1,0 +1,760 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+  <title>westcoastmap</title>
+
+  <!-- <link rel="stylesheet" href="http://cdn.leafletjs.com/leaflet-0.7/leaflet.css" /> -->
+  
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.0.3/dist/leaflet.css" />
+  <script src="https://unpkg.com/leaflet@1.0.3/dist/leaflet.js"></script>
+
+  <!-- <script src="http://cdn.leafletjs.com/leaflet-0.7/leaflet.js"></script> -->
+<!--  <script src='leaflet-omnivore.min.js'></script>-->
+  <script src='//api.tiles.mapbox.com/mapbox.js/plugins/leaflet-omnivore/v0.3.1/leaflet-omnivore.min.js'></script>
+  <script src="http://d3js.org/d3.v4.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/d3-delaunay@6"></script>
+
+  <link rel="preconnect" href="https://fonts.gstatic.com">
+  <link href="https://fonts.googleapis.com/css2?family=Beth+Ellen&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Kalam&display=swap" rel="stylesheet">
+</head>
+
+<body>
+  <div id="map"></div>
+
+
+  <style>
+  #map { 
+    height: 100%
+  }
+
+  html, body {
+    height: 100%;
+    margin: 0;
+    padding: 0;
+  }
+
+  div.tooltip {                   /* set the CSS for tooltip divs */
+    position: fixed;         /* reference for measurement */
+    text-align: center;         /* align the text to the center */
+/*    width: 60px;                    /* set the width of the rectangle */
+/*    height: 28px;                   /* set the height of the   rectangle */
+/*    padding: 2px;                   /* set a border around the rectangle */
+    font: 25px sans-serif;      /* set the font type for the tooltips */
+/*    background: lightsteelblue; /* set the colour of the rectangle */
+    border: 1px;                    /* turn off the border (0px) */
+    border-radius: 8px;         /* set how rounded the edges of the rectangle is */
+    pointer-events: none;           /* 'none' tells the mouse to ignore the rectangle */
+    z-index: 9999;
+    max-width: 100%;
+  }
+
+  div.tooltip.tooltiptext {
+    font: 25px sans-serif;
+  }
+
+  .popover {
+  position: absolute;
+  top: 0;
+  left: 0;
+  z-index: 9998;
+  display: none;
+  padding: 5px;
+  }
+
+  .hike {
+    fill: none;
+    stroke: #d2d2d2;
+  }
+
+  </style>
+
+  
+  <script type="text/javascript">
+
+    var unitRadius = 22;     // The pixel radius of a point of size = 1
+
+    var mergePoints = function(a, b) {
+      var weight = b.r / (a.r + b.r);
+      return {
+        x: a.x + weight * (b.x - a.x),
+        y: a.y + weight * (b.y - a.y),
+        r: unitRadius * Math.sqrt(a.points.length + b.points.length),
+        points: a.points.concat(b.points)
+      };
+    };
+
+    var initClusterArray = function(points) {
+      var clusters = points.map(function(d, i) {
+        var p = map.latLngToLayerPoint([d.lat, d.lng]);
+          return {
+            x: p.x,
+            y: p.y,
+            r: unitRadius,
+            points: [d]
+          };
+        });
+
+      // Consolidate coincident vertices. The voronoi tesselation will not
+      // work if there are duplicate vertices.
+      return d3.nest()
+        .key(function(d) { return [d.x.toFixed(3), d.y.toFixed(3)].join(','); })
+        .rollup(function(leaves) { return leaves.reduce(mergePoints); })
+        .entries(clusters)
+        .map(function(d, i) { return d.value; });
+    };
+
+
+    var overlap = function(points) {
+        var clusters = initClusterArray(points).map(function(d, i) { d.index = i; return d; })
+        maxRadius = d3.max(clusters, function(d) { return d.r; })
+        hasClusters = true;
+
+        // Loop until we don't find any more clusters
+        while (hasClusters) {
+            hasClusters = false;
+
+            // Create an array of the edges of a Delaunay triangulation,
+            // sorted by distance (from smallest to largest).
+            //
+            // One of the properties of a Delaunay triangulation is that
+            // at least one of the edges connected to a node is its nearest
+            // neighbor.
+            var vertices = []
+            clusters.filter(function(v) { return !!v; }).forEach(d => vertices.push([d.x, d.y]))
+            vertices = vertices.flat(Infinity)
+            const delaunay = new d3.Delaunay(vertices)
+
+            links = []
+            
+            for (var i = 0; i < clusters.length; ++i) {
+              for (let nbr of delaunay.neighbors(i)) {
+                if (nbr > i) {
+                  if ((clusters[i] !== null)&(clusters[nbr] !== null)){
+                    obj = new Object()
+                    obj.source = clusters[i]
+                    obj.target = clusters[nbr]
+                    dx = obj.source.x - obj.target.x
+                    dy = obj.source.y - obj.target.y
+                    obj.distance = Math.sqrt(dx * dx + dy * dy)
+                    links.push(obj)
+                  }
+                }
+              }
+            }
+
+            links = links.sort(function(a, b) {
+                    return a.distance - b.distance;
+                });
+
+            // Iterate through the edges, from smallest to largest distance.
+            // The first line will be between the closest pair of points,
+            // the second line will be between the second closest pair, etc.
+            //
+            // We use Array.prototype.every() so that we can return false
+            // in order to break out of the loop.
+            links.every(function(link) {
+                // If the distance is larger than twice the largest radius,
+                // then we can stop iterating, because we know that this
+                // and all remaining points are too far apart to overlap.
+                if (link.distance > maxRadius * 2) {
+                    return false;
+                }
+
+                // If the distance between the points is smaller than the
+                // sum of the two points" radii, they overlap and need to
+                // be merged together.
+                if (link.distance < (link.source.r + link.target.r)) {
+                    var cluster = mergePoints(link.source, link.target);
+
+                    // Set the cluster's index to that of the source node
+                    cluster.index = link.source.index;
+
+                    // Set the target node in the clusters array to null
+                    clusters[link.target.index] = null;
+
+                    // Replace the source node with the merged point
+                    clusters[link.source.index] = cluster;
+
+                    // Update our maximum radius
+                    maxRadius = Math.max(maxRadius, cluster.r);
+
+                    // Set flag, so that the outer (while) loop runs again
+                    hasClusters = true;
+
+                    // Break out of the loop, then re-do Delaunay triangulation
+                    // and try to find another pair of points that overlap.
+                    return false;
+                }
+                return true;
+            });
+            // clusters = clusters.filter(function(v) { return !!v; })
+        }
+
+        // Return our cluster array, filtering out the nulls we inserted
+        // while clustering
+        return clusters.filter(function(v) { return !!v; });
+    };
+
+
+    var map = L.map('map').setView([44.070714,-124.115619], 6.01);
+    // var map = L.map('map').setView([38.027336, -122.826623], 13.01);
+
+    // 'https://api.mapbox.com/styles/v1/astrofyz/clm1f0crg020t01p91frx3ni2/tiles/256/{z}/{x}/{y}@2x?access_token=pk.eyJ1IjoiYXN0cm9meXoiLCJhIjoiY2xtMWF4MTBxMzByMTNxcGkwc2cycDlhMSJ9.0o3QKpA4eMmFsX2pfk-Idw'
+
+    //https://api.mapbox.com/styles/v1/astrofyz/clmul907w05lq01qielmlansh/tiles/256/{z}/{x}/{y}@2x?access_token=pk.eyJ1IjoiYXN0cm9meXoiLCJhIjoiY2xtMWF4MTBxMzByMTNxcGkwc2cycDlhMSJ9.0o3QKpA4eMmFsX2pfk-Idw
+
+
+    L.tileLayer(
+      'https://api.mapbox.com/styles/v1/astrofyz/clmuntcu505n101qb24x3hc6r/tiles/256/{z}/{x}/{y}@2x?access_token=pk.eyJ1IjoiYXN0cm9meXoiLCJhIjoiY2xtMWF4MTBxMzByMTNxcGkwc2cycDlhMSJ9.0o3QKpA4eMmFsX2pfk-Idw', {
+        attribution: '© OpenStreetMap | Mapbox',
+        maxZoom: 22,
+      }).addTo(map);
+
+    // L.tileLayer(
+    //   'https://tile.openstreetmap.org/{z}/{x}/{y}.png', {
+    //     attribution: 'OpenStreetMap | @astrofyz',
+    //     maxZoom: 18,
+    //   }).addTo(map);
+
+
+    var Tooltip = d3.select("#map")
+            .append("div")
+            .attr("class", "tooltip")
+            .style("opacity", 0)
+
+    var TooltipText = d3.select("#map")
+            .append("div")
+            .attr("class", "tooltip")
+            .style("opacity", 0)
+            .style("data-contatiner", "body")
+            .style("font", "Beth Ellen")
+
+
+    // We pick up the SVG from the map object
+    var svgLayer = L.svg({clickable:true});
+    svgLayer.addTo(map);
+
+    var svg = d3.select("#map").select("svg");
+    var g = d3.select("#map").select("svg").select('g');
+    g.attr("class", "leaflet-zoom-hide");
+
+    var allHikesGroup = g.append("g").attr("class", "all-hikes-group");
+
+    var allPointsHikes = {}
+
+    function addHike(hike) {
+      d3.csv(`strava/${hike.fname}.csv`, function(data) {
+        pointsHikes = []
+
+        data.forEach(function(d, i) {
+          var pointObj = {
+            lat: parseFloat(d.lat),
+            lng: parseFloat(d.lng)
+          }
+          pointObj.x = map.latLngToLayerPoint([pointObj.lat, pointObj.lng]).x
+          pointObj.y = map.latLngToLayerPoint([pointObj.lat, pointObj.lng]).y
+
+          // if (i % 2 == 0) {console.log(i); pointsHikes.push(pointObj)}
+
+          pointsHikes.push(pointObj)
+        })
+
+        allPointsHikes[hike.activityID] = pointsHikes
+
+        var hikeGroup = allHikesGroup.append("g").attr("class", `hike-group hike-${hike.activityID}`);
+
+        map.on("viewreset", function() {alert("VIEW RESET"); update(hikeGroup)});  // doesn't fire at zoom events in leaflet > 1.0
+        map.on("zoomend", function(){
+          hikeGroup.selectAll("path").remove();
+          hikeGroup.selectAll(".trailhead").remove()
+          update(hikeGroup)
+        })  // g > *
+        map.on("moveend", function(){update(hikeGroup)})
+        update(hikeGroup);
+
+        function update(hikeGroup) {
+          // console.log(hikeGroup.selectAll("trailhead"))
+          var clustersHikes = allPointsHikes[hike.activityID].map(function(d) {
+            var p = map.latLngToLayerPoint([d.lat, d.lng]);
+            return {
+              x: p.x,
+              y: p.y,
+              r: 4
+            };
+          });
+
+          var line = d3.line()
+                  .curve(d3.curveBasis)
+                  .x(d => d.x)
+                  .y(d => d.y)
+
+          hikeGroup.selectAll(`path`)
+                  .data([clustersHikes])
+                  .enter()
+                  .append("path")
+                  .attr("d", line)
+                  .style("stroke", '#d53f50')
+                  .style("stroke-width", 2.5)
+                  .style("fill", "none")
+
+
+          // console.log(clustersHikes)
+          hikeGroup.selectAll(`.node`)
+                  .data(clustersHikes.slice(0, 1))
+                  .enter()
+                  // .append("circle")
+                  // .attr("cx", d => d.x )
+                  // .attr("cy", d => d.y )
+                  // .attr("r", d => d.r)
+                  // .attr("fill", "none")
+                  .append("svg:image")
+                  .attr("class", "trailhead")
+                  .attr("x", d => d.x-22)
+                  .attr("y", d => d.y-22)
+                  .attr('width', 45) //7*map.getZoom())  // неплохо выглядит на уровне 15, хотя можно и чуть-чуть поменьше. может, до этого уровня делать их кружочками?
+                  .attr('height', 45) //7*map.getZoom())
+                  .attr("xlink:href", "icon/trailhead.png")
+                  .on("mouseover", function() {
+                    hikeGroup.selectAll(`path`)
+                            .style("stroke", '#3fd5c4')
+                            .style("stroke-width", 3)
+
+                    embed_path = 'Distance: '+hike.distance+' mi<br>Elev gain: '+hike.elevgain+' ft<br>Time: '+hike.h+'h '+hike.m+'m'
+
+                    TooltipText
+                            .html(embed_path)
+                            .style("left", (d3.event.pageX+5) + "px")
+                            .style("top", (d3.event.pageY+5) + "px")
+                            .style("opacity", 1.)
+                            .style("position", "fixed")
+                            .style("font-size", "15px")
+                            .style("font-family", "Beth Ellen, regular")
+                            .style("width", "max-content")
+                            .style("max-width", "150px")
+                            .style("padding", "10px")
+                            .style("text-align", "left")
+                            .style("border", "2px solid #f9e9cd")
+                            .style("background-color", "#f9e9cd")
+                            .transition()
+                            .duration(200)
+
+                  })
+                  .on("mouseout", function(d) {
+                    hikeGroup.selectAll(`path`)
+                            .style("stroke", "#d53f50")
+                            .style("stroke-width", 2.5)
+
+                    TooltipText
+                            .transition()
+                            .duration(200)
+                            .style("opacity", 0);
+                  })
+                  .attr("style", "pointer-events: fill;");
+        }
+      });
+    }
+
+    addHike({'fname': 'Day_1', 'distance': '6.51', 'elevgain': '1,137', 'h':2, 'm': 24, 'activityID': 9654069895})
+    addHike({'fname': 'Day_2', 'distance': '8.94', 'elevgain': '1,321', 'h':3, 'm': 23, 'activityID': 9661365815})
+    addHike({'fname': 'Day_3', 'distance': '7.03', 'elevgain': '1,068', 'h':2, 'm': 20, 'activityID': 9661367269})
+    addHike({'fname': 'Foggy_forest_hike', 'distance': '10.13', 'elevgain': '1,932', 'h':3, 'm': 35, 'activityID': 9675057750})
+    addHike({'fname': 'Rainforest_walk', 'distance': '6.93', 'elevgain': '534', 'h':2, 'm': 16, 'activityID': 9707359219})
+    addHike({'fname': 'Walk_along_the_river', 'distance': '8.60', 'elevgain': '1,326', 'h':3, 'm': 15, 'activityID': 9708447961})
+    addHike({'fname': 'Attempt_to_summit_mt_Washington', 'distance': '3.85', 'elevgain': '1,440', 'h':1, 'm': 56, 'activityID': 9719200738})
+
+    // console.log(g.select("all-hikes-group"))
+    // console.log(allHikesGroup._groups[0][0])
+    // console.log(d3.selectAll(".hike-group"))
+
+
+    var allDriveGroup = g.append("g").attr("class", "all-drive-group");
+
+    var allPointsDrive = {}
+
+    function addDrive(drive) {
+      d3.csv(`driving/2023-08-${drive.date}_new.csv`, function(data) {
+        pointsDrive = []
+        // console.log(drive.date, data)
+        data.forEach(function(d) {
+          var pointObj = {
+            lat: parseFloat(d.lat),
+            lng: parseFloat(d.lon)
+          }
+          pointObj.x = map.latLngToLayerPoint([pointObj.lat, pointObj.lng]).x
+          pointObj.y = map.latLngToLayerPoint([pointObj.lat, pointObj.lng]).y
+          pointsDrive.push(pointObj)
+        })
+
+        allPointsDrive[drive.date] = pointsDrive
+
+        var driveGroup = allDriveGroup.append("g").attr("class", `drive-group drive-${drive.date}`);
+
+        map.on("viewreset", function() {alert("VIEW RESET"); update(driveGroup)});  // doesn't fire at zoom events in leaflet > 1.0
+        map.on("zoomend", function(){
+          driveGroup.selectAll("path").remove()
+          update(driveGroup)
+        })  // g > *
+        map.on("moveend", function(){update(driveGroup)})
+        update(driveGroup);
+
+        function update(driveGroup) {
+          var clustersDrive = allPointsDrive[drive.date].map(function(d) {
+            var p = map.latLngToLayerPoint([d.lat, d.lng]);
+            return {
+              x: p.x,
+              y: p.y,
+              r: 4
+            };
+          });
+
+          var line = d3.line()
+                  .curve(d3.curveBasis)
+                  .x(d => d.x)
+                  .y(d => d.y)
+
+          driveGroup.selectAll(`path`)
+                  .data([clustersDrive])
+                  .enter()
+                  .append("path")
+                  .attr("d", line)
+                  .style("stroke", color(drive.date))
+                  .style("stroke-width", 3)
+                  .style("fill", "none")
+
+        }
+      });
+    }
+
+    var color = d3.scaleOrdinal(d3.schemeCategory10);
+    color = d3.scaleLinear()
+            .domain([13, 25])
+            .range(["#ffb14e", "#9d02d7"]);
+
+    for (let i = 13; i<=25; i++) {
+      if (i === 15) {continue}
+      addDrive({'date': i})
+    }
+
+    // addDrive({'date': 17})
+
+
+    d3.csv("df_places.csv", function(data) {
+      points = []
+
+      data.forEach(function(d) {
+        var pointObj = new Object()
+        pointObj.lat = parseFloat(d.latitude)
+        pointObj.lng = parseFloat(d.longitude)
+        pointObj.name = d.name 
+        pointObj.type = d.type
+        pointObj.pic = d.pic
+        pointObj.notes = d.notes
+        points.push(pointObj)
+        d.LatLng = new L.LatLng(parseFloat(d.latitude), parseFloat(d.longitude))
+      })
+
+
+      map.on("viewreset", function() {alert("VIEW RESET"); update});  // doesn't fire at zoom events in leaflet > 1.0
+      map.on("zoomend", function(){
+        // d3.selectAll("circle").remove();
+        d3.selectAll("image.svg").remove();
+        update()})  // g > *
+      map.on("moveend", function(){update()})
+      update();
+
+      function update() {
+        // var clusters =  overlap(points)
+
+        // console.log(points)
+        // clusters.forEach(d => console.log(d.points.length))
+
+        var clusters = points.map(function(d, i) {
+          var p = map.latLngToLayerPoint([d.lat, d.lng]);
+          return {
+            x: p.x,
+            y: p.y,
+            r: unitRadius,
+            points: [d]
+          };
+        });
+
+        // var feature = g.selectAll(".clusters")
+        //   .data(clusters)
+        //   .enter()
+        //   .append("circle")
+        //   .attr("cx", function(d) { return d.x; })
+        //   .attr("cy", function(d) { return d.y; })
+        //   .attr("r", function(d) { return 4; })
+        //   .attr("fill", "red")
+          // .on("mouseover", function(d) {})
+          // .attr("style", "pointer-events: fill;");
+
+        // clusters.forEach(d => console.log(d.points[0].type))
+
+        var featureId = g.selectAll(".node")
+                .data(clusters.filter(function(d) {return (d.r === unitRadius)&&(d.points[0].type != 'Grocery')
+                        &&(d.points[0].type != 'Food')
+                        &&(d.points[0].type != 'Hotel')}))
+                .enter()
+                .append("svg:image")
+                .attr('class', d => `svg ${d.points[0].type}`)
+                .attr('width', 45) //7*map.getZoom())  // неплохо выглядит на уровне 15, хотя можно и чуть-чуть поменьше. может, до этого уровня делать их кружочками?
+                .attr('height', 45) //7*map.getZoom())
+                .attr('x', function(d) { return d.x-22; })
+                .attr('y', function(d) { return d.y-22; })
+                .attr("xlink:href",function(d){
+                  if (d.points[0].type === 'camp') {return "icon/camp_nobrd.png"}
+                  if (d.points[0].type === 'coffee') {return "icon/coffee_nobrd.png"}
+                  if (d.points[0].type === 'icecream') {return "icon/gelato_nobrd.png"}
+                  if (d.points[0].type === 'Food') {return "icon/food_nobrd2.png"}
+                  if (d.points[0].type === 'Hotel') {return "icon/hotel_nobrd.png"}
+                  if (d.points[0].type === 'Grocery') {return "icon/safeway.png"}
+                  else {return "icon/lighthouse_nobrd.png"}
+                })
+                .on("mouseover", function(d) {
+                  // console.log(d.points[0].pic, d.points[0])
+                  if (d.points[0].pic !== "") {
+                    var filename = d.points[0].pic
+                    var x0 = d3.event.pageX
+                    var y0 = d3.event.pageY
+                    var W = map.getSize().x
+                    var H = map.getSize().y
+                    var imsize = Math.round(Math.min(W, H) / 2.5)
+                    var R = Math.sqrt(2) * imsize / 2
+                    var A = 2 * W - (4 * x0)
+                    var B = 2 * H - (4 * y0)
+                    var u = A * R / Math.sqrt(A * A + B * B)
+                    var v = B * R / Math.sqrt(A * A + B * B)
+                    var topCorner = y0 + v - imsize / 2
+                    var leftCorner = x0 + u - imsize / 2
+                    var img_path = "<img src=pic/"+filename+" width="+imsize+" height="+imsize+">"
+
+                    Tooltip
+                            .transition()
+                            .duration(200)
+                            .style("opacity", .95)
+
+                    Tooltip
+                            .html(img_path) //this will add the image on mouseover
+                            .style("left", leftCorner + "px")     // переподсчитать положения с window.innerWidth window.innerHeight и поставить его туда, куда надо
+                            .style("top", topCorner + "px")
+                  }
+
+                  else if (d.points[0].name !== "") {
+                    var W = map.getSize().x
+                    var H = map.getSize().y
+                    var textsize = Math.round(Math.min(W, H) / 5)
+
+                    if (d.points[0].notes !== "") {
+                      embed_path = d.points[0].name+'<br>H.K.: '+d.points[0].notes
+                    }
+                    else {
+                      embed_path = d.points[0].name
+                    }
+
+                    TooltipText
+                            .html(embed_path)
+                            .style("left", (d3.event.pageX+5) + "px")
+                            .style("top", (d3.event.pageY+5) + "px")
+                            .style("opacity", 1.)
+                            .style("position", "fixed")
+                            .style("font-size", "15px")
+                            .style("font-family", "Kalam, light")
+                            .style("width", "max-content")
+                            .style("max-width", textsize+"px")
+                            .style("padding", "10px")
+                            .style("text-align", "left")
+                            .style("border", "2px solid #f9e9cd")
+                            .style("background-color", "#f9e9cd")
+                  }
+                })
+                .on("mouseout", function(d) {                           // when the mouse leaves a circle, do the following
+                  Tooltip
+                          .transition()                                    // declare the transition properties to fade-out the div
+                          .duration(500)                                  // it shall take 500ms
+                          .style("opacity", 0);                           // and go all the way to an opacity of nil
+                  TooltipText
+                          .transition()
+                          .duration(500)
+                          .style("opacity", 0);
+                })
+                .attr("style", "pointer-events: fill;");
+
+      }
+    })
+
+    var clickLegend = {};
+
+    clickLegend["camp"] = true;
+    clickLegend["coffee"] = true;
+    clickLegend["icecream"] = true;
+    clickLegend["Animals"] = true;
+
+    console.log(clickLegend)
+
+    var legendSvg = d3.select("body").append("svg")
+            .attr("class", "legend")
+            .attr("width", 245)
+            .attr("height", 280)
+            .style("position", "absolute")
+            .style("top", "10px")
+            .style("left", "10px")
+            .style("z-index", 1000);
+
+    // console.log(legendSvg)
+
+    updateLegend()
+
+    // map.on("zoomend", updateLegend());
+    // map.on("moveend", updateLegend());
+
+    function updateLegend() {
+      legendSvg.selectAll("*").remove();
+
+      // Append new legend elements
+      legendSvg.append("rect")
+              .attr("x", 30)
+              .attr("y", 30)
+              .attr("width", 245)
+              .attr("height", 280)
+              .style("fill", "blue")
+              .style("opacity", 0.07)
+              .style("z-index", 1000);
+
+      legendSvg.append("image")
+              .attr("x", 40)
+              .attr("y", 35)
+              .attr("width", 45)
+              .attr("height", 45)
+              .style("fill", "none")
+              .attr("xlink:href", "icon/camp_nobrd.png")
+              .attr("alignment-baseline", "middle")
+              .on("click", function() {
+                clickLegend["camp"] = !clickLegend["camp"]
+                d3.selectAll("image.svg.camp").style("opacity", +clickLegend["camp"])
+                legendSvg.selectAll("text.camp").style("fill", clickLegend["camp"] ? "black" : "gray");
+              })
+              .style("z-index", 1000);
+
+      legendSvg.append("image")
+              .attr("x", 40)
+              .attr("y", 85)
+              .attr("width", 45)
+              .attr("height", 45)
+              .style("fill", "none")
+              .attr("xlink:href", "icon/coffee_nobrd.png")
+              .attr("alignment-baseline", "middle")
+              .on("click", function() {
+                clickLegend["coffee"] = !clickLegend["coffee"]
+                d3.selectAll("image.svg.coffee").style("opacity", +clickLegend["coffee"])
+                legendSvg.selectAll("text.coffee").style("fill", clickLegend["coffee"] ? "black" : "gray");
+              })
+              .style("z-index", 1000);
+
+      legendSvg.append("image")
+              .attr("x", 40)
+              .attr("y", 135)
+              .attr("width", 45)
+              .attr("height", 45)
+              .style("fill", "none")
+              .attr("xlink:href", "icon/gelato_nobrd.png")
+              .attr("alignment-baseline", "middle")
+              .on("click", function() {
+                clickLegend["icecream"] = !clickLegend["icecream"]
+                d3.selectAll("image.svg.icecream").style("opacity", +clickLegend["icecream"])
+                legendSvg.selectAll("text.icecream").style("fill", clickLegend["icecream"] ? "black" : "gray");
+              })
+              .style("z-index", 1000);
+
+      legendSvg.append("image")
+              .attr("x", 40)
+              .attr("y", 185)
+              .attr("width", 45)
+              .attr("height", 45)
+              .style("fill", "none")
+              .attr("xlink:href", "icon/lighthouse_nobrd.png")
+              .attr("alignment-baseline", "middle")
+              .on("click", function() {
+                clickLegend["Animals"] = !clickLegend["Animals"]
+                d3.selectAll("image.svg.Animals").style("opacity", +clickLegend["Animals"])
+                legendSvg.selectAll("text.Animals").style("fill", clickLegend["Animals"] ? "black" : "gray");
+              })
+              .style("z-index", 1000);
+
+      legendSvg.append("image")
+              .attr("x", 40)
+              .attr("y", 235)
+              .attr("width", 45)
+              .attr("height", 45)
+              .style("fill", "none")
+              .attr("xlink:href", "icon/trailhead.png")
+              .attr("alignment-baseline", "middle")
+              .style("z-index", 1000);
+
+      legendSvg.append("text")
+              .attr("x", 90)
+              .attr("y", 65)
+              .text("Campground")
+              .attr("class", "camp")
+              .style("font-size", "18px")
+              .style("fill", clickLegend["camp"] ? "black" : "gray")
+              .style("font-family", "Kalam, light")
+              .attr("alignment-baseline", "middle")
+              .style("z-index", 1000);
+
+      legendSvg.append("text")
+              .attr("x", 90)
+              .attr("y", 115)
+              .text("Coffee")
+              .attr("class", "coffee")
+              .style("font-size", "18px")
+              .style("fill", clickLegend["coffee"] ? "black" : "gray")
+              .style("font-family", "Kalam, light")
+              .attr("alignment-baseline", "middle")
+              .style("z-index", 1000);
+
+      legendSvg.append("text")
+              .attr("x", 90)
+              .attr("y", 165)
+              .text("Ice cream")
+              .attr("class", "icecream")
+              .style("font-size", "18px")
+              .style("fill", clickLegend["icecream"] ? "black" : "gray")
+              .style("font-family", "Kalam, light")
+              .attr("alignment-baseline", "middle")
+              .style("z-index", 1000);
+
+      legendSvg.append("text")
+              .attr("x", 90)
+              .attr("y", 215)
+              .text("Points of interest")
+              .attr("class", "Animals")
+              .style("font-size", "18px")
+              .style("fill", clickLegend["Animals"] ? "black" : "gray")
+              .style("font-family", "Kalam, light")
+              .attr("alignment-baseline", "middle")
+              .style("z-index", 1000);
+
+      legendSvg.append("text")
+              .attr("x", 90)
+              .attr("y", 265)
+              .text("Trailheads")
+              .attr("class", "trailhead")
+              .style("font-size", "18px")
+              .style("fill", "black")
+              .style("font-family", "Kalam, light")
+              .attr("alignment-baseline", "middle")
+              .style("z-index", 1000);
+
+      }
+
+      // console.log(allHikesGroup.selectAll(".trailhead"))
+
+
+
+  </script>
+</body>
+
+</html>
