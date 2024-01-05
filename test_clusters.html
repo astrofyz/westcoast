@@ -8,6 +8,7 @@
 
   <link rel="stylesheet" href="https://unpkg.com/leaflet@1.0.3/dist/leaflet.css" />
   <script src="https://unpkg.com/leaflet@1.0.3/dist/leaflet.js"></script>
+  <script src="https://unpkg.com/leaflet-providers@latest/leaflet-providers.js"></script>
 
   <!-- <script src="http://cdn.leafletjs.com/leaflet-0.7/leaflet.js"></script> -->
   <!--  <script src='leaflet-omnivore.min.js'></script>-->
@@ -97,14 +98,19 @@
             // console.log(delaunay)   // build set of links (source, target) with distance, sort them by distance; links are done with neighbours
 
             links = []
+
+          console.log(clusters.filter(function(v) { return !!v; }).map(d => ([d.x, d.y])))
+          console.log(vertices)
+          console.log(delaunay)
             
-            for (var i = 0; i < clusters.length; ++i) {
+            for (var i = 0; i < clusters.filter(function(v) { return !!v; }).length; ++i) {
               for (let nbr of delaunay.neighbors(i)) {
                 if (nbr > i) {
-                  if ((clusters[i] !== null)&(clusters[nbr] !== null)){
+                  console.log(i, nbr, clusters.filter(function(v) { return !!v; })[i], clusters.filter(function(v) { return !!v; })[nbr])
+                  if ((clusters.filter(function(v) { return !!v; })[i] !== null)&(clusters.filter(function(v) { return !!v; })[nbr] !== null)){
                     obj = new Object()
-                    obj.source = clusters[i]
-                    obj.target = clusters[nbr]
+                    obj.source = clusters.filter(function(v) { return !!v; })[i]
+                    obj.target = clusters.filter(function(v) { return !!v; })[nbr]
                     dx = obj.source.x - obj.target.x
                     dy = obj.source.y - obj.target.y
                     obj.distance = Math.sqrt(dx * dx + dy * dy)
@@ -118,7 +124,7 @@
                     return a.distance - b.distance;
                 });
 
-            // console.log(links)
+            console.log(links)
 
 
             // Iterate through the edges, from smallest to largest distance.
@@ -131,8 +137,9 @@
                 // If the distance is larger than twice the largest radius,
                 // then we can stop iterating, because we know that this
                 // and all remaining points are too far apart to overlap.
-                // console.log(link.distance)
+                console.log(link.distance, link.source.r, link.target.r, link.source, link.target)
                 if (link.distance > maxRadius * 2) {
+                    console.log(`link distance is large ${link.distance}  ${maxRadius}`)
                     return false;
                 }
 
@@ -140,6 +147,7 @@
                 // sum of the two points" radii, they overlap and need to
                 // be merged together.
                 if (link.distance < link.source.r + link.target.r) {
+                   console.log(`link distance is smol ${link.distance}  ${link.source.r + link.target.r}`)
                     var cluster = mergePoints(link.source, link.target);
 
                     // Set the cluster's index to that of the source node
@@ -171,18 +179,20 @@
         return clusters.filter(function(v) { return !!v; });
     };
 
-    var map = L.map('map').setView([44.070714,-124.115619], 6.01);
+    var map = L.map('map').setView([47.5145124,-123.3290252], 7.01);
     // var map = L.map('map').setView([38.027336, -122.826623], 13.01);
 
     // 'https://api.mapbox.com/styles/v1/astrofyz/clm1f0crg020t01p91frx3ni2/tiles/256/{z}/{x}/{y}@2x?access_token=pk.eyJ1IjoiYXN0cm9meXoiLCJhIjoiY2xtMWF4MTBxMzByMTNxcGkwc2cycDlhMSJ9.0o3QKpA4eMmFsX2pfk-Idw'
 
     // mapLink =
     //   '<a href="http://openstreetmap.org">OpenStreetMap</a>';
-    L.tileLayer(
-      'https://tile.openstreetmap.org/{z}/{x}/{y}.png', {
-        attribution: '© OpenStreetMap',
-        maxZoom: 18,
-      }).addTo(map);
+    // L.tileLayer(
+    //   'https://tile.openstreetmap.org/{z}/{x}/{y}.png', {
+    //     attribution: '© OpenStreetMap',
+    //     maxZoom: 18,
+    //   }).addTo(map);
+
+    L.tileLayer.provider('Stadia.StamenWatercolor').addTo(map);
 
 
     // We pick up the SVG from the map object
@@ -194,7 +204,7 @@
     g.attr("class", "leaflet-zoom-hide");
 
 
-    d3.csv("df_places.csv", function(data) {
+    d3.csv("df_places_Seattle.csv", function(data) {
       points = []
 
       data.forEach(function(d) {
@@ -202,9 +212,9 @@
         d.LatLng = new L.LatLng(parseFloat(d.latitude), parseFloat(d.longitude))
       })
 
-      console.log(initClusterArray(points))
+      // console.log(initClusterArray(points))
 
-      console.log(points)
+      // console.log(points)
 
       // var mediacount = d3.nest()
       //   .key(function(d) {
@@ -238,7 +248,7 @@
       function update() {
         var clusters = overlap(points)
         // console.log(clusters.length)
-        clusters.forEach(d => console.log(d.r))
+        // clusters.forEach(d => console.log(d.points.length, d))
 
         var elem = g.selectAll("g myCircleText")
                 .data(clusters)
@@ -267,7 +277,7 @@
 
         elemEnter.append("text")
                 .text(function(d) {
-                  return `${d.points.length}`
+                  return d.points.length > 1 ? `${d.points.length}` : ""
                 })
                 .attr("x", function(d) { return d.x-d.r/2; })
                 .attr("y", function(d) { return d.y+d.r/2; })
