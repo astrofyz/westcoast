@@ -8,6 +8,7 @@
   
   <link rel="stylesheet" href="https://unpkg.com/leaflet@1.0.3/dist/leaflet.css" />
   <script src="https://unpkg.com/leaflet@1.0.3/dist/leaflet.js"></script>
+  <script src="https://unpkg.com/leaflet-providers@latest/leaflet-providers.js"></script>
 
   <!-- <script src="http://cdn.leafletjs.com/leaflet-0.7/leaflet.js"></script> -->
 <!--  <script src='leaflet-omnivore.min.js'></script>-->
@@ -205,6 +206,8 @@
 
     //https://api.mapbox.com/styles/v1/astrofyz/clmul907w05lq01qielmlansh/tiles/256/{z}/{x}/{y}@2x?access_token=pk.eyJ1IjoiYXN0cm9meXoiLCJhIjoiY2xtMWF4MTBxMzByMTNxcGkwc2cycDlhMSJ9.0o3QKpA4eMmFsX2pfk-Idw
 
+    // L.tileLayer.provider('Stadia.StamenWatercolor').addTo(map);
+
 
     L.tileLayer(
       'https://api.mapbox.com/styles/v1/astrofyz/clmuntcu505n101qb24x3hc6r/tiles/256/{z}/{x}/{y}@2x?access_token=pk.eyJ1IjoiYXN0cm9meXoiLCJhIjoiY2xtMWF4MTBxMzByMTNxcGkwc2cycDlhMSJ9.0o3QKpA4eMmFsX2pfk-Idw', {
@@ -244,6 +247,7 @@
 
     var allPointsHikes = {}
 
+
     function addHike(hike) {
       d3.csv(`strava/${hike.fname}.csv`, function(data) {
         pointsHikes = []
@@ -275,7 +279,7 @@
         update(hikeGroup);
 
         function update(hikeGroup) {
-          // console.log(hikeGroup.selectAll("trailhead"))
+          // console.log(allHikesGroup.selectAll(`.hike-${specificActivityID}`))
           var clustersHikes = allPointsHikes[hike.activityID].map(function(d) {
             var p = map.latLngToLayerPoint([d.lat, d.lng]);
             return {
@@ -364,10 +368,9 @@
     addHike({'fname': 'Walk_along_the_river', 'distance': '8.60', 'elevgain': '1,326', 'h':3, 'm': 15, 'activityID': 9708447961})
     addHike({'fname': 'Attempt_to_summit_mt_Washington', 'distance': '3.85', 'elevgain': '1,440', 'h':1, 'm': 56, 'activityID': 9719200738})
 
-    // console.log(g.select("all-hikes-group"))
-    // console.log(allHikesGroup._groups[0][0])
-    // console.log(d3.selectAll(".hike-group"))
-
+    // var specificActivityID = 9654069895
+    // console.log(allHikesGroup.selectAll(`.hike-${specificActivityID}`).nodes()) //._groups[0][0])
+    // console.log(d3.selectAll(".all-hikes-group"))
 
     var allDriveGroup = g.append("g").attr("class", "all-drive-group");
 
