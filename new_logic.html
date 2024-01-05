@@ -1,0 +1,690 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <title>westcoastmap</title>
+
+  <!-- <link rel="stylesheet" href="http://cdn.leafletjs.com/leaflet-0.7/leaflet.css" /> -->
+
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.0.3/dist/leaflet.css" />
+  <script src="https://unpkg.com/leaflet@1.0.3/dist/leaflet.js"></script>
+
+  <!-- <script src="http://cdn.leafletjs.com/leaflet-0.7/leaflet.js"></script> -->
+  <!--  <script src='leaflet-omnivore.min.js'></script>-->
+  <script src='//api.tiles.mapbox.com/mapbox.js/plugins/leaflet-omnivore/v0.3.1/leaflet-omnivore.min.js'></script>
+  <script src="http://d3js.org/d3.v5.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/d3-delaunay@6"></script>
+
+  <link rel="preconnect" href="https://fonts.gstatic.com">
+  <link href="https://fonts.googleapis.com/css2?family=Beth+Ellen&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Kalam&display=swap" rel="stylesheet">
+</head>
+
+<body>
+<div id="map"></div>
+
+<style>
+  #map {
+    height: 100%
+  }
+
+  html, body {
+    height: 100%;
+    margin: 0;
+    padding: 0;
+  }
+
+</style>
+
+<script type="text/javascript">
+
+  var unitRadius = 22;     // The pixel radius of a point of size = 1
+
+
+  var mergePoints = function(a, b) {
+    var weight = b.r / (a.r + b.r);
+    return {
+      x: a.x + weight * (b.x - a.x),
+      y: a.y + weight * (b.y - a.y),
+      r: unitRadius * Math.sqrt(a.points.length + b.points.length),
+      points: a.points.concat(b.points)
+    };
+  };
+
+
+  var initClusterArray = function(points) {
+    var clusters = points.map(function(d, i) {
+      var p = map.latLngToLayerPoint([d.lat, d.lng]);
+      return {
+        x: p.x,
+        y: p.y,
+        r: unitRadius,
+        points: [d]
+      };
+    });
+
+    return d3.nest()
+            .key(function(d) { return [d.x.toFixed(3), d.y.toFixed(3)].join(','); })
+            .rollup(function(leaves) { return leaves.reduce(mergePoints); })
+            .entries(clusters)
+            .map(function(d, i) { return d.value; });
+  };
+
+
+  var overlap = function(points) {
+    var clusters = initClusterArray(points).map(function(d, i) { d.index = i; return d; })
+    maxRadius = d3.max(clusters, function(d) { return d.r; })
+    hasClusters = true;
+
+    while (hasClusters) {
+      hasClusters = false;
+
+      var vertices = []
+      clusters.filter(function(v) { return !!v; }).forEach(d => vertices.push([d.x, d.y]))
+      vertices = vertices.flat(Infinity)
+      const delaunay = new d3.Delaunay(vertices)
+
+      links = []
+
+      for (var i = 0; i < clusters.filter(function(v) { return !!v; }).length; ++i) {
+        for (let nbr of delaunay.neighbors(i)) {
+          if (nbr > i) {
+            if ((clusters.filter(function(v) { return !!v; })[i] !== null)&(clusters.filter(function(v) { return !!v; })[nbr] !== null)){
+              obj = new Object()
+              obj.source = clusters.filter(function(v) { return !!v; })[i]
+              obj.target = clusters.filter(function(v) { return !!v; })[nbr]
+              dx = obj.source.x - obj.target.x
+              dy = obj.source.y - obj.target.y
+              obj.distance = Math.sqrt(dx * dx + dy * dy)
+              links.push(obj)
+            }
+          }
+        }
+      }
+
+      links = links.sort(function(a, b) {
+        return a.distance - b.distance;
+      });
+
+      links.every(function(link) {
+        if (link.distance > maxRadius * 2) {
+          return false;
+        }
+
+        if (link.distance < (link.source.r + link.target.r)) {
+          var cluster = mergePoints(link.source, link.target);
+          cluster.index = link.source.index;
+          clusters[link.target.index] = null;
+          clusters[link.source.index] = cluster;
+          maxRadius = Math.max(maxRadius, cluster.r);
+          hasClusters = true;
+          return false;
+        }
+        return true;
+      });
+    }
+    return clusters.filter(function(v) { return !!v; });
+  };
+
+
+  var map = L.map('map').setView([44.070714,-124.115619], 6.01);
+  // var map = L.map('map').setView([38.027336, -122.826623], 13.01);
+
+  // 'https://api.mapbox.com/styles/v1/astrofyz/clm1f0crg020t01p91frx3ni2/tiles/256/{z}/{x}/{y}@2x?access_token=pk.eyJ1IjoiYXN0cm9meXoiLCJhIjoiY2xtMWF4MTBxMzByMTNxcGkwc2cycDlhMSJ9.0o3QKpA4eMmFsX2pfk-Idw'
+
+  //https://api.mapbox.com/styles/v1/astrofyz/clmul907w05lq01qielmlansh/tiles/256/{z}/{x}/{y}@2x?access_token=pk.eyJ1IjoiYXN0cm9meXoiLCJhIjoiY2xtMWF4MTBxMzByMTNxcGkwc2cycDlhMSJ9.0o3QKpA4eMmFsX2pfk-Idw
+
+
+  L.tileLayer(
+          'https://api.mapbox.com/styles/v1/astrofyz/clmuntcu505n101qb24x3hc6r/tiles/256/{z}/{x}/{y}@2x?access_token=pk.eyJ1IjoiYXN0cm9meXoiLCJhIjoiY2xtMWF4MTBxMzByMTNxcGkwc2cycDlhMSJ9.0o3QKpA4eMmFsX2pfk-Idw', {
+            attribution: '© OpenStreetMap | Mapbox',
+            maxZoom: 22,
+          }).addTo(map);
+
+
+  var Tooltip = d3.select("#map")
+          .append("div")
+          .attr("class", "tooltip")
+          .style("opacity", 0)
+
+  var TooltipText = d3.select("#map")
+          .append("div")
+          .attr("class", "tooltip")
+          .style("opacity", 0)
+          .style("data-contatiner", "body")
+          .style("font", "Beth Ellen")
+
+  function getImagePath(type) {
+    switch (type) {
+      case 'camp':
+        return "icon/camp_nobrd.png";
+      case 'coffee':
+        return "icon/coffee_nobrd.png";
+      case 'icecream':
+        return "icon/gelato_nobrd.png";
+      case 'trailhead':
+        return "icon/trailhead.png";
+      case 'Animals':
+        return "icon/lighthouse_nobrd.png";
+      default:
+        return "icon/lighthouse_nobrd.png";
+    }
+  }
+
+
+  // We pick up the SVG from the map object
+  var svgLayer = L.svg({clickable:true});
+  svgLayer.addTo(map);
+
+  var svg = d3.select("#map").select("svg");
+  var g = d3.select("#map").select("svg").select('g');
+  g.attr("class", "leaflet-zoom-hide");
+
+  var clickLegend = {};
+  clickLegend["camp"] = true;
+  clickLegend["coffee"] = false;
+  clickLegend["icecream"] = false;
+  clickLegend["Animals"] = false;
+  clickLegend["trailhead"] = true;
+  // clickLegend["Food"] = false;
+
+
+  var legendSvg = d3.select("body").append("svg")
+          .attr("class", "legend")
+          .attr("width", 245)
+          .attr("height", 280)
+          .style("position", "absolute")
+          .style("top", "10px")
+          .style("left", "10px")
+          .style("z-index", 1000);
+
+  var line = d3.line()
+          .curve(d3.curveBasis)
+          .x(d => d.x)
+          .y(d => d.y)
+
+  var color = d3.scaleLinear()
+          .domain([13, 25])
+          .range(["#ffb14e", "#9d02d7"]);
+
+  var allHikesGroup = g.append("g").attr("class", "all-hikes-group");
+  var allPointsHikes = new Map()
+
+  var allDriveGroup = g.append("g").attr("class", "all-drive-group");
+  var allPointsDrive = {}
+
+  var allPointsPlaces = []
+
+  function addHike(hike) {
+    return new Promise(function(resolve, reject){
+      d3.csv(`strava/${hike.fname}.csv`)
+              .then(function(data) {
+                const pointsHikes = []
+
+                data.forEach(function (d) {
+                  var pointObj = {
+                    lat: parseFloat(d.lat),
+                    lng: parseFloat(d.lng)
+                  }
+                  pointObj.x = map.latLngToLayerPoint([pointObj.lat, pointObj.lng]).x
+                  pointObj.y = map.latLngToLayerPoint([pointObj.lat, pointObj.lng]).y
+
+                  // if (i % 2 == 0) {console.log(i); pointsHikes.push(pointObj)}
+
+                  pointsHikes.push(pointObj)
+                })
+
+                allPointsHikes.set((hike.activityID).toString(), pointsHikes)
+
+                const hikeGroup = allHikesGroup.append("g").attr("class", `hike-group hike-${hike.activityID}`);
+              resolve()
+              })
+              .catch(function(error){
+                console.log(error)
+                reject(error)
+              })
+    })
+  }
+
+  function addDrive(drive) {
+    return new Promise(function (resolve, reject) {
+      d3.csv(`driving/2023-08-${drive.date}_new.csv`)
+              .then(function (data) {
+                pointsDrive = []
+                // console.log(drive.date, data)
+                data.forEach(function (d) {
+                  var pointObj = {
+                    lat: parseFloat(d.lat),
+                    lng: parseFloat(d.lon)
+                  }
+                  pointObj.x = map.latLngToLayerPoint([pointObj.lat, pointObj.lng]).x
+                  pointObj.y = map.latLngToLayerPoint([pointObj.lat, pointObj.lng]).y
+                  pointsDrive.push(pointObj)
+                })
+
+                allPointsDrive[drive.date] = pointsDrive
+
+                var driveGroup = allDriveGroup.append("g").attr("class", `drive-group drive-${drive.date}`);
+                resolve()
+              })
+              .catch(function (error) {
+                console.log("error in addDrive", error)
+                reject(error)
+              });
+    });
+  }
+
+  // addHike({'fname': 'Day_1', 'distance': '6.51', 'elevgain': '1,137', 'h':2, 'm': 24, 'activityID': 9654069895})
+  // addHike({'fname': 'Day_2', 'distance': '8.94', 'elevgain': '1,321', 'h':3, 'm': 23, 'activityID': 9661365815})
+  // addHike({'fname': 'Day_3', 'distance': '7.03', 'elevgain': '1,068', 'h':2, 'm': 20, 'activityID': 9661367269})
+  // addHike({'fname': 'Foggy_forest_hike', 'distance': '10.13', 'elevgain': '1,932', 'h':3, 'm': 35, 'activityID': 9675057750})
+  // addHike({'fname': 'Rainforest_walk', 'distance': '6.93', 'elevgain': '534', 'h':2, 'm': 16, 'activityID': 9707359219})
+  // addHike({'fname': 'Walk_along_the_river', 'distance': '8.60', 'elevgain': '1,326', 'h':3, 'm': 15, 'activityID': 9708447961})
+  // addHike({'fname': 'Attempt_to_summit_mt_Washington', 'distance': '3.85', 'elevgain': '1,440', 'h':1, 'm': 56, 'activityID': 9719200738})
+
+  function addPlaces() {
+    return new Promise(function (resolve, reject) {
+      d3.csv("df_places_subset.csv")
+              .then(function (data) {
+                data.forEach(function (d) {
+                  var pointObj = new Object()
+                  pointObj.lat = parseFloat(d.latitude)
+                  pointObj.lng = parseFloat(d.longitude)
+                  pointObj.name = d.name
+                  pointObj.type = d.type
+                  pointObj.pic = d.pic
+                  pointObj.notes = d.notes
+                  pointObj.ID = d.timestamp
+                  allPointsPlaces.push(pointObj)
+                  d.LatLng = new L.LatLng(parseFloat(d.latitude), parseFloat(d.longitude))
+                })
+              resolve()
+              })
+              .catch(function (error) {
+                reject(error);
+              });
+    });
+  }
+
+
+  const hikeList = [
+    { fname: 'Day_1', distance: '6.51', elevgain: '1,137', h: 2, m: 24, activityID: 9654069895 },
+    { fname: 'Day_2', distance: '8.94', elevgain: '1,321', h: 3, m: 23, activityID: 9661365815 },
+    { fname: 'Day_3', distance: '7.03', elevgain: '1,068', h: 2, m: 20, activityID: 9661367269 },
+    { fname: 'Foggy_forest_hike', distance: '10.13', elevgain: '1,932', h: 3, m: 35, activityID: 9675057750 },
+    { fname: 'Rainforest_walk', distance: '6.93', elevgain: '534', h: 2, m: 16, activityID: 9707359219 },
+    { fname: 'Walk_along_the_river', distance: '8.60', elevgain: '1,326', h: 3, m: 15, activityID: 9708447961 },
+    { fname: 'Attempt_to_summit_mt_Washington', distance: '3.85', elevgain: '1,440', h: 1, m: 56, activityID: 9719200738 }
+  ];
+
+  const datesList = [{date: 13}, {date: 14}, {date: 16}, {date: 17},
+    {date: 18}, {date: 19}, {date: 20}, {date: 21}, {date: 22},
+    {date: 23}, {date: 24}, {date: 25}]
+
+  const hikePromises = hikeList.map(hike => addHike(hike))
+
+  // const drivePromises = []
+
+  // for (let i = 13; i<=25; i++) {
+  //   if (i === 15) {continue}
+  //   drivePromises.push(addDrive({'date': i}))
+  // }
+  const drivePromises = datesList.map(date => addDrive(date))
+
+  points = []  // could change to allPointsPlaces
+  const placesPromises = addPlaces()
+
+  const allPromises = [...hikePromises, ...drivePromises, placesPromises]
+
+  Promise.all(allPromises)
+          .then(results => {
+            // console.log("all Hikes Loaded", allPointsHikes)
+            // console.log(allHikesGroup)
+            // console.log("all drives Loaded", allPointsDrive)
+            // console.log(allDriveGroup)
+            // console.log("all places loaded", allPointsPlaces)
+
+            map.on("viewreset", function() {alert("VIEW RESET"); update()});  // doesn't fire at zoom events in leaflet > 1.0
+            map.on("zoomend", function(){
+              // allHikesGroup.selectAll("*").remove();
+              // allHikesGroup.selectAll("*").remove();
+              // allDriveGroup.selectAll(".path").remove()
+              // d3.selectAll("image.svg").remove();  // what else should I remove
+              update()})  // g > *
+            map.on("moveend", function(){
+              // allHikesGroup.selectAll("*").remove();
+              update()
+            })
+
+            update()
+
+            function updateElements(data, group, className, lineFunction, strokeColor, strokeWidth) {
+              var clusters = data.map(function (d) {
+                var p = map.latLngToLayerPoint([d.lat, d.lng]);
+                return {
+                  x: p.x,
+                  y: p.y,
+                  r: 4
+                };
+              });
+
+              group.selectAll(`.${className}`)
+                      .data([clusters])
+                      .join(
+                              enter => enter.append("path")
+                                      .attr("class", className)
+                                      .attr("d", lineFunction)
+                                      .style("stroke", strokeColor)
+                                      .style("stroke-width", strokeWidth)
+                                      .style("fill", "none"),
+                              update => update.attr("d", lineFunction),
+                              exit => exit.remove()
+                      );
+            }
+
+            function update() {
+              hikeList.forEach(function (hike) {
+                updateElements(
+                        allPointsHikes.get((hike.activityID).toString()),
+                        allHikesGroup.selectAll(`.hike-${hike.activityID}`),
+                        `hike-${hike.activityID}`,
+                        line,
+                        '#d53f50',
+                        2.5
+                );
+              });
+
+              datesList.forEach(function (drive) {
+                updateElements(
+                        allPointsDrive[drive.date],
+                        allDriveGroup.selectAll(`.drive-${drive.date}`),
+                        `drive-${drive.date}`,
+                        line,
+                        color(drive.date),
+                        3
+                );
+              });
+
+              // console.log(allPointsPlaces.filter(item => clickLegend[item.type]))
+
+              var clusters = overlap(allPointsPlaces.filter(item => clickLegend[item.type]))
+
+              // console.log(clusters.filter(function(d) {return (d.r > unitRadius)}))
+              // console.log(d.p)
+
+              // var clusterMarks = g.selectAll(".cluster")
+              //         .data(clusters.filter(function(d) {return (d.r > unitRadius)}))
+              //         .join(
+              //                 enter => {
+              //                   enter
+              //                           .append("circle")
+              //                           .attr("cx", function (d) { return d.x; })
+              //                           .attr("cy", function (d) { return d.y; })
+              //                           .attr("r", function (d) { return d.r; })
+              //                           .attr("fill", "blue")
+              //                           .attr("opacity", 0.3);
+              //
+              //                 },
+              //                 update => {
+              //                   update
+              //                           .attr("cx", function (d) { return d.x; })
+              //                           .attr("cy", function (d) { return d.y; })
+              //                           .attr("r", function (d) { return d.r; });
+              //                 },
+              //                 exit => exit.remove()
+              //         )
+
+              var clusterMarks = g.selectAll(".cluster")
+                      .data(clusters.filter(function(d) {return (d.r > unitRadius)}))
+                      .join(
+                              enter => {
+                                var enterSelection = enter.append("g").attr("class", "cluster");
+
+                                enterSelection.append("circle")
+                                        .attr("cx", function (d) { return d.x; })
+                                        .attr("cy", function (d) { return d.y; })
+                                        .attr("r", function (d) { return d.r/2; })
+                                        .attr("fill", "blue")
+                                        .attr("opacity", 0.3);
+
+                                enterSelection.append("text")
+                                        .text(function (d) {
+                                          return d.points.length > 1 ? `${d.points.length}` : "";
+                                        })
+                                        .attr("x", function (d) { return d.x; })
+                                        .attr("y", function (d) { return d.y; })
+                                        .attr("text-anchor", "middle")
+                                        .attr("font-size", function (d) {
+                                          return d.r / ((d.r * 10) / 200);
+                                        })
+                                        .attr("dy", function (d) {
+                                          return d.r / ((d.r * 25) / 100);
+                                        });
+                              },
+                              update => {
+                                update.select("circle")
+                                        .attr("cx", function (d) { return d.x; })
+                                        .attr("cy", function (d) { return d.y; })
+                                        .attr("r", function (d) { return d.r/2; });
+
+                                update.select("text")
+                                        .text(function (d) {
+                                          return d.points.length > 1 ? `${d.points.length}` : "";
+                                        })
+                                        .attr("x", function (d) { return d.x; })
+                                        .attr("y", function (d) { return d.y; });
+                              },
+                              exit => exit.remove()
+                      );
+
+
+              var featureId = g.selectAll(".node")
+                      .data(clusters.filter(function(d) {
+                        return (d.r === unitRadius);
+                      }))
+                      .join(
+                              enter => {
+                                var group = enter.append("g")
+                                        .attr("class", "node")
+                                        .attr("transform", function(d) {
+                                          return `translate(${d.x-22},${d.y-22})`
+                                        })
+                                        .style("pointer-events", "all"); // Add this line
+
+                                group.append("svg:image")
+                                        .attr('class', d => `svg ${d.points[0].type}`)
+                                        .attr("width", 45)
+                                        .attr("height", 45)
+                                        .attr("xlink:href", function(d){
+                                          return getImagePath(d.points[0].type)
+                                        })
+                                        .on("mouseover", function(d) {
+                                          // Your existing mouseover logic
+                                          // handleMouseOver(d);
+                                          console.log(d)
+                                        })
+                                        .on("mouseout", function(d) {
+                                          // handleMouseOut(d);
+                                          // Your existing mouseout logic
+                                          console.log("out")
+                                        });
+
+                              },
+                              update => {
+                                console.log(update)
+                                update
+                                        .attr("transform", function(d) {
+                                          return `translate(${d.x-22},${d.y-22})`;})
+                                        .select("image")
+                                        .attr("xlink:href", function(d){
+                                          return getImagePath(d.points[0].type)})
+                                        .on("mouseover", function(d) {
+                                          // Your existing mouseover logic
+                                          // handleMouseOver(d);
+                                          console.log(d)
+                                        })
+                                        .on("mouseout", function(d) {
+                                          // handleMouseOut(d);
+                                          // Your existing mouseout logic
+                                          console.log("out")
+                                        });
+                              },
+                              exit => exit.remove()
+                      );
+
+              legendSvg.selectAll("*").remove();
+
+              legendSvg.append("rect")
+                      .attr("x", 30)
+                      .attr("y", 30)
+                      .attr("width", 245)
+                      .attr("height", 280)
+                      .style("fill", "blue")
+                      .style("opacity", 0.07)
+                      .style("z-index", 1000);
+
+              legendSvg.append("image")
+                      .attr("x", 40)
+                      .attr("y", 35)
+                      .attr("width", 45)
+                      .attr("height", 45)
+                      .style("fill", "none")
+                      .attr("xlink:href", "icon/camp_nobrd.png")
+                      .attr("alignment-baseline", "middle")
+                      .on("click", function() {
+                        clickLegend["camp"] = !clickLegend["camp"]
+                        d3.selectAll("image.svg.camp").style("opacity", +clickLegend["camp"])
+                        legendSvg.selectAll("text.camp").style("fill", clickLegend["camp"] ? "black" : "gray");
+                      })
+                      .style("z-index", 1000);
+
+              legendSvg.append("image")
+                      .attr("x", 40)
+                      .attr("y", 85)
+                      .attr("width", 45)
+                      .attr("height", 45)
+                      .style("fill", "none")
+                      .attr("xlink:href", "icon/coffee_nobrd.png")
+                      .attr("alignment-baseline", "middle")
+                      .on("click", function() {
+                        clickLegend["coffee"] = !clickLegend["coffee"]
+                        d3.selectAll("image.svg.coffee").style("opacity", +clickLegend["coffee"])
+                        legendSvg.selectAll("text.coffee").style("fill", clickLegend["coffee"] ? "black" : "gray");
+                      })
+                      .style("z-index", 1000);
+
+              legendSvg.append("image")
+                      .attr("x", 40)
+                      .attr("y", 135)
+                      .attr("width", 45)
+                      .attr("height", 45)
+                      .style("fill", "none")
+                      .attr("xlink:href", "icon/gelato_nobrd.png")
+                      .attr("alignment-baseline", "middle")
+                      .on("click", function() {
+                        clickLegend["icecream"] = !clickLegend["icecream"]
+                        d3.selectAll("image.svg.icecream").style("opacity", +clickLegend["icecream"])
+                        legendSvg.selectAll("text.icecream").style("fill", clickLegend["icecream"] ? "black" : "gray");
+                      })
+                      .style("z-index", 1000);
+
+              legendSvg.append("image")
+                      .attr("x", 40)
+                      .attr("y", 185)
+                      .attr("width", 45)
+                      .attr("height", 45)
+                      .style("fill", "none")
+                      .attr("xlink:href", "icon/lighthouse_nobrd.png")
+                      .attr("alignment-baseline", "middle")
+                      .on("click", function() {
+                        clickLegend["Animals"] = !clickLegend["Animals"]
+                        d3.selectAll("image.svg.Animals").style("opacity", +clickLegend["Animals"])
+                        legendSvg.selectAll("text.Animals").style("fill", clickLegend["Animals"] ? "black" : "gray");
+                      })
+                      .style("z-index", 1000);
+
+              legendSvg.append("image")
+                      .attr("x", 40)
+                      .attr("y", 235)
+                      .attr("width", 45)
+                      .attr("height", 45)
+                      .style("fill", "none")
+                      .attr("xlink:href", "icon/trailhead.png")
+                      .attr("alignment-baseline", "middle")
+                      .style("z-index", 1000);
+
+              legendSvg.append("text")
+                      .attr("x", 90)
+                      .attr("y", 65)
+                      .text("Campground")
+                      .attr("class", "camp")
+                      .style("font-size", "18px")
+                      .style("fill", clickLegend["camp"] ? "black" : "gray")
+                      .style("font-family", "Kalam, light")
+                      .attr("alignment-baseline", "middle")
+                      .style("z-index", 1000);
+
+              legendSvg.append("text")
+                      .attr("x", 90)
+                      .attr("y", 115)
+                      .text("Coffee")
+                      .attr("class", "coffee")
+                      .style("font-size", "18px")
+                      .style("fill", clickLegend["coffee"] ? "black" : "gray")
+                      .style("font-family", "Kalam, light")
+                      .attr("alignment-baseline", "middle")
+                      .style("z-index", 1000);
+
+              legendSvg.append("text")
+                      .attr("x", 90)
+                      .attr("y", 165)
+                      .text("Ice cream")
+                      .attr("class", "icecream")
+                      .style("font-size", "18px")
+                      .style("fill", clickLegend["icecream"] ? "black" : "gray")
+                      .style("font-family", "Kalam, light")
+                      .attr("alignment-baseline", "middle")
+                      .style("z-index", 1000);
+
+              legendSvg.append("text")
+                      .attr("x", 90)
+                      .attr("y", 215)
+                      .text("Points of interest")
+                      .attr("class", "Animals")
+                      .style("font-size", "18px")
+                      .style("fill", clickLegend["Animals"] ? "black" : "gray")
+                      .style("font-family", "Kalam, light")
+                      .attr("alignment-baseline", "middle")
+                      .style("z-index", 1000);
+
+              legendSvg.append("text")
+                      .attr("x", 90)
+                      .attr("y", 265)
+                      .text("Trailheads")
+                      .attr("class", "trailhead")
+                      .style("font-size", "18px")
+                      .style("fill", "black")
+                      .style("font-family", "Kalam, light")
+                      .attr("alignment-baseline", "middle")
+                      .style("z-index", 1000);
+
+            }
+
+          })
+          .catch(error => {console.log("error loading promises", error)})
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+</script>
+</body>
+</html>
