@@ -51,6 +51,13 @@
     font: 25px sans-serif;
   }
 
+  .leaflet-tooltip-top:before,
+  .leaflet-tooltip-bottom:before,
+  .leaflet-tooltip-left:before,
+  .leaflet-tooltip-right:before {
+    border: none !important;
+  }
+
   .airport-label {
     font-family: 'Beth Ellen', sans-serif;
     font-size: 18px;
@@ -157,7 +164,6 @@
   </div>
 </div>
 
-
 <script type="text/javascript">
 
   document.addEventListener("DOMContentLoaded", function() {
@@ -172,12 +178,6 @@
         console.log("no scroll")
       }
     });
-
-    // setTimeout(function () {
-    //   initialBackground.classList.add("hide");
-    // }, 10000); // Adjust the delay as needed
-
-
   });
 
 
@@ -271,25 +271,26 @@
     return clusters.filter(function(v) { return !!v; });
   };
 
+  console.log(window.innerHeight, window.innerWidth)
 
   var map = L.map('map').setView([44.070714,-124.115619], 6.01);
   // var map = L.map('map').setView([38.027336, -122.826623], 13.01);
 
   L.tileLayer.provider('Stadia.StamenWatercolor').addTo(map);
 
-  // Define city coordinates and names
-  var cities = [
-    { name: "City1", coordinates: [37.7749, -122.4194] },
-    { name: "City2", coordinates: [47.6061, -122.3328] }
-  ];
+  var MarkerIcon = L.icon({
+    iconUrl: 'icon/github-mark.png', // the background image you want
+    iconSize: [1, 1], // size of the icon
+  });
 
-  var markerSFO = new L.marker([37.6163, -122.3861], { opacity: 0.0 }); //opacity may be set to zero
+  var markerSFO = new L.marker([37.6163, -122.3861], { icon:MarkerIcon, opacity: 0.0 }); //opacity may be set to zero
   markerSFO.bindTooltip("San Francisco", {permanent: true, className: "airport-label", offset: [0, 10], interactive: false, direction: "right" });
   markerSFO.addTo(map);
 
-  var markerSEA = new L.marker([47.44518, -122.29694], { opacity: 0.0 }); //opacity may be set to zero
+  var markerSEA = new L.marker([47.44518, -122.29694], { icon:MarkerIcon, opacity: 0.0 }); //opacity may be set to zero
   markerSEA.bindTooltip("Seattle", {permanent: true, className: "airport-label", offset: [0, 0], interactive: false, direction: "right"});
   markerSEA.addTo(map);
+
 
   var Tooltip = d3.select("#map")
           .append("div")
@@ -342,11 +343,11 @@
 
   var legendSvg = d3.select("body").append("svg")
           .attr("class", "legend")
-          .attr("width", 270)
-          .attr("height", 280)
+          .attr("width", "22%")
+          .attr("height", "25%")
           .style("position", "absolute")
-          .style("top", "10px")
-          .style("left", "10px")
+          .style("top", "40px")
+          .style("left", "40px")
           .style("z-index", 1000);
 
   var line = d3.line()
@@ -451,7 +452,6 @@
 
   function handleMouseOver(element) {
     if (element.points[0].type != "trailhead") {
-      // console.log(element.points[0].pic, element.points[0])
       if (element.points[0].pic !== "") {
         var filename = element.points[0].pic
         var x0 = d3.event.pageX
@@ -468,7 +468,6 @@
         var leftCorner = x0 + u - imsize / 2
         var img_path = "<img src=pic/"+filename+" width="+imsize+" height="+imsize+">"
 
-        // console.log(img_path, leftCorner, topCorner)
         Tooltip
                 .transition()
                 .duration(200)
@@ -512,7 +511,6 @@
       }
     }
     else {
-      // console.log("this is a trailhead", element.points[0])
       var defs = svg.append("defs");
       var filter = defs.append("filter")
               .attr("id", "glow")
@@ -610,12 +608,6 @@
 
   Promise.all(allPromises)
           .then(results => {
-            // console.log("all Hikes Loaded", allPointsHikes)
-            // console.log(allHikesGroup)
-            // console.log("all drives Loaded", allPointsDrive)
-            // console.log(allDriveGroup)
-            // console.log("all places loaded", allPointsPlaces)
-
             // map.on("viewreset", function() {alert("VIEW RESET"); update(); updateLegend()});  // doesn't fire at zoom events in leaflet > 1.0
             map.on("zoomend", function(){
               updateLegend()
@@ -655,9 +647,7 @@
             }
 
             function update() {
-              // console.log("update is called")
-              // console.log(allPointsPlaces.filter(item => clickLegend[item.type]))
-
+              console.log(map.getZoom())
               hikeList.forEach(function (hike) {
                 updateElements(
                         allPointsHikes.get((hike.activityID).toString()),
@@ -682,10 +672,7 @@
                 );
               });
 
-              // console.log(allPointsPlaces.filter(item => clickLegend[item.type]))
-
               var clusters = overlap(allPointsPlaces.filter(item => clickLegend[item.type]))
-
 
               var clusterMarks = g.selectAll(".cluster")
                       .data(clusters.filter(function(d) {return (d.r > unitRadius)}))
@@ -768,14 +755,10 @@
                                           return getImagePath(d.points[0].type)
                                         })
                                         .on("mouseover", function(d) {
-                                          // Your existing mouseover logic
                                           handleMouseOver(d);
-                                          // console.log(d)
                                         })
                                         .on("mouseout", function(d) {
                                           handleMouseOut(d);
-                                          // Your existing mouseout logic
-                                          // console.log("out")
                                         });
 
                               },
@@ -788,14 +771,10 @@
                                         .attr("xlink:href", function(d){
                                           return getImagePath(d.points[0].type)})
                                         .on("mouseover", function(d) {
-                                          // Your existing mouseover logic
                                           handleMouseOver(d);
-                                          // console.log(d)
                                         })
                                         .on("mouseout", function(d) {
                                           handleMouseOut(d);
-                                          // Your existing mouseout logic
-                                          // console.log("out")
                                         });
                               },
                               exit => exit.remove()
@@ -822,183 +801,72 @@
                       .attr("id", "blurFilter")
                       .append("feGaussianBlur")
                       .attr("in", "SourceGraphic")
-                      .attr("stdDeviation", 10)
+                      .attr("stdDeviation", 300)
 
               legendSvg.append("rect")
-                      .attr("x", 30)
-                      .attr("y", 30)
-                      .attr("width", 270)
-                      .attr("height", 280)
+                      .attr("x", 0)
+                      .attr("y", 0)
+                      .attr("width", "100%")
+                      .attr("height", "100%")
                       .attr("filter", "url(#blurFilter)")
                       .attr("fill", function(d, i) { return "url(#patternLegend)"; })
                       .style("opacity", 0.90)
                       .style("z-index", 1000);
 
-              legendSvg.append("image")
-                      .attr("x", 40)
-                      .attr("y", 35)
-                      .attr("width", 45)
-                      .attr("height", 45)
-                      .style("fill", "none")
-                      .attr("xlink:href", "icon/camp_nobrd.png")
-                      .attr("alignment-baseline", "middle")
-                      .style("cursor", "pointer")
-                      .on("click", function() {
-                        clickLegend["camp"] = !clickLegend["camp"]
-                        legendSvg.selectAll("text.camp").style("fill", clickLegend["camp"] ? "black" : "gray");
-                        update()
-                      })
-                      .style("z-index", 1000);
+              var aspectRatio = d3.select(".legend").node().getBBox().height / d3.select(".legend").node().getBBox().width
 
-              legendSvg.append("image")
-                      .attr("x", 40)
-                      .attr("y", 85)
-                      .attr("width", 45)
-                      .attr("height", 45)
-                      .style("fill", "none")
-                      .attr("xlink:href", "icon/coffee_nobrd.png")
-                      .attr("alignment-baseline", "middle")
-                      .style("cursor", "pointer")
-                      .on("click", function() {
-                        clickLegend["coffee"] = !clickLegend["coffee"]
-                        legendSvg.selectAll("text.coffee").style("fill", clickLegend["coffee"] ? "black" : "gray");
-                        update()
-                      })
-                      .style("z-index", 1000);
+              const legendObj = d3.map({"camp": "Campground",
+                "icecream": "Ice cream",
+                "coffee": "Coffee",
+                "lighthouse": "Points of interest",
+                "trailhead": "Trailhead"})
 
-              legendSvg.append("image")
-                      .attr("x", 40)
-                      .attr("y", 135)
-                      .attr("width", 45)
-                      .attr("height", 45)
-                      .style("fill", "none")
-                      .attr("xlink:href", "icon/icecream_nobrd.png")
-                      .attr("alignment-baseline", "middle")
-                      .style("cursor", "pointer")
-                      .on("click", function() {
-                        clickLegend["icecream"] = !clickLegend["icecream"]
-                        legendSvg.selectAll("text.icecream").style("fill", clickLegend["icecream"] ? "black" : "gray");
-                        update()
-                      })
-                      .style("z-index", 1000);
+              const y = d3
+                      .scalePoint()
+                      .domain(legendObj.keys())
+                      .range([0, d3.select(".legend").node().getBBox().height])
+                      .padding(0.5)
 
-              legendSvg.append("image")
-                      .attr("x", 40)
-                      .attr("y", 185)
-                      .attr("width", 45)
-                      .attr("height", 45)
-                      .style("fill", "none")
-                      .attr("xlink:href", "icon/lighthouse_nobrd.png")
-                      .attr("alignment-baseline", "middle")
-                      .style("cursor", "pointer")
-                      .on("click", function() {
-                        clickLegend["lighthouse"] = !clickLegend["lighthouse"]
-                        legendSvg.selectAll("text.lighthouse").style("fill", clickLegend["lighthouse"] ? "black" : "gray");
-                        update()
-                      })
-                      .style("z-index", 1000);
+              var xtext = (aspectRatio > 1.5) ? "20%" : y.step()*1.5
+              var ytextOffset = (aspectRatio > 1.5) ? y.step()*0.4 : y.step()*0.1
+              var textSize = (aspectRatio > 1.5) ? "1.8vw" : "1.5vw"
 
-              legendSvg.append("image")
-                      .attr("x", 40)
-                      .attr("y", 235)
-                      .attr("width", 45)
-                      .attr("height", 45)
-                      .style("fill", "none")
-                      .attr("xlink:href", "icon/trailhead_nobrd.png")
-                      .attr("alignment-baseline", "middle")
-                      .style("cursor", "pointer")
-                      .on("click", function() {
-                        clickLegend["trailhead"] = !clickLegend["trailhead"]
-                        legendSvg.selectAll("text.trailhead").style("fill", clickLegend["trailhead"] ? "black" : "gray");
-                        update()
-                      })
-                      .style("z-index", 1000);
 
-              legendSvg.append("text")
-                      .attr("x", 90)
-                      .attr("y", 65)
-                      .text("Campground")
-                      .attr("class", "camp")
-                      .style("font-size", "18px")
-                      .style("fill", clickLegend["camp"] ? "black" : "gray")
-                      // .style("font-family", "Kalam, light")
-                      .style("font-family", "Beth Ellen")
-                      .attr("alignment-baseline", "middle")
-                      .style("cursor", "pointer")
-                      .on("click", function() {
-                        clickLegend["camp"] = !clickLegend["camp"]
-                        legendSvg.selectAll("text.camp").style("fill", clickLegend["camp"] ? "black" : "gray");
-                        update()
-                      })
-                      .style("z-index", 1000);
+              legendObj.entries().forEach(d => {
+                legendSvg.append("image")
+                        .attr("x", "5%")
+                        .attr("y", y(d.key)-y.step()/2)
+                        .attr("width", y.step()*0.90)
+                        .attr("height", y.step()*0.90)
+                        .style("fill", "none")
+                        .attr("xlink:href", `icon/${d.key}_nobrd.png`)
+                        .attr("alignment-baseline", "middle")
+                        .style("cursor", "pointer")
+                        .on("click", function() {
+                          clickLegend[d.key] = !clickLegend[d.key]
+                          legendSvg.selectAll(`text.${d.key}`).style("fill", clickLegend[d.key] ? "black" : "gray");
+                          update()
+                        })
+                        .style("z-index", 1000);
 
-              legendSvg.append("text")
-                      .attr("x", 90)
-                      .attr("y", 115)
-                      .text("Coffee")
-                      .attr("class", "coffee")
-                      .style("font-size", "18px")
-                      .style("fill", clickLegend["coffee"] ? "black" : "gray")
-                      .style("font-family", "Beth Ellen")
-                      .attr("alignment-baseline", "middle")
-                      .style("cursor", "pointer")
-                      .on("click", function() {
-                        clickLegend["coffee"] = !clickLegend["coffee"]
-                        legendSvg.selectAll("text.coffee").style("fill", clickLegend["coffee"] ? "black" : "gray");
-                        update()
-                      })
-                      .style("z-index", 1000);
-
-              legendSvg.append("text")
-                      .attr("x", 90)
-                      .attr("y", 165)
-                      .text("Ice cream")
-                      .attr("class", "icecream")
-                      .style("font-size", "18px")
-                      .style("fill", clickLegend["icecream"] ? "black" : "gray")
-                      .style("font-family", "Beth Ellen")
-                      .attr("alignment-baseline", "middle")
-                      .style("cursor", "pointer")
-                      .on("click", function() {
-                        clickLegend["icecream"] = !clickLegend["icecream"]
-                        legendSvg.selectAll("text.icecream").style("fill", clickLegend["icecream"] ? "black" : "gray");
-                        update()
-                      })
-                      .style("z-index", 1000);
-
-              legendSvg.append("text")
-                      .attr("x", 90)
-                      .attr("y", 215)
-                      .text("Points of interest")
-                      .attr("class", "lighthouse")
-                      .style("font-size", "18px")
-                      .style("fill", clickLegend["lighthouse"] ? "black" : "gray")
-                      .style("font-family", "Beth Ellen")
-                      .attr("alignment-baseline", "middle")
-                      .style("cursor", "pointer")
-                      .on("click", function() {
-                        clickLegend["lighthouse"] = !clickLegend["lighthouse"]
-                        legendSvg.selectAll("text.lighthouse").style("fill", clickLegend["lighthouse"] ? "black" : "gray");
-                        update()
-                      })
-                      .style("z-index", 1000);
-
-              legendSvg.append("text")
-                      .attr("x", 90)
-                      .attr("y", 265)
-                      .text("Trailheads")
-                      .attr("class", "trailhead")
-                      .style("font-size", "18px")
-                      .style("fill", "black")
-                      .style("font-family", "Beth Ellen")
-                      .attr("alignment-baseline", "middle")
-                      .style("cursor", "pointer")
-                      .on("click", function() {
-                        clickLegend["trailhead"] = !clickLegend["trailhead"]
-                        legendSvg.selectAll("text.trailhead").style("fill", clickLegend["trailhead"] ? "black" : "gray");
-                        update()
-                      })
-                      .style("z-index", 1000);
+                legendSvg.append("text")
+                        .attr("x", xtext)
+                        .attr("y", y(d.key)+ytextOffset)
+                        .text(d.value)
+                        .attr("class", d.key)
+                        .style("font-size", textSize)
+                        // .style("font-size", "18px")
+                        .style("fill", clickLegend[d.key] ? "black" : "gray")
+                        .style("font-family", "Beth Ellen")
+                        .attr("alignment-baseline", "middle")
+                        .style("cursor", "pointer")
+                        .on("click", function() {
+                          clickLegend[d.key] = !clickLegend[d.key]
+                          legendSvg.selectAll(`text.${d.key}`).style("fill", clickLegend[d.key] ? "black" : "gray");
+                          update()
+                        })
+                        .style("z-index", 1000);
+              })
             }
 
           })
