@@ -1,0 +1,93 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <title>westcoastmap</title>
+
+  <!-- <link rel="stylesheet" href="http://cdn.leafletjs.com/leaflet-0.7/leaflet.css" /> -->
+
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.0.3/dist/leaflet.css" />
+  <script src="https://unpkg.com/leaflet@1.0.3/dist/leaflet.js"></script>
+  <script src="https://unpkg.com/leaflet-providers@latest/leaflet-providers.js"></script>
+
+  <script src='//api.tiles.mapbox.com/mapbox.js/plugins/leaflet-omnivore/v0.3.1/leaflet-omnivore.min.js'></script>
+  <script src="http://d3js.org/d3.v5.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/d3-delaunay@6"></script>
+
+  <link rel="preconnect" href="https://fonts.gstatic.com">
+  <link href="https://fonts.googleapis.com/css2?family=Beth+Ellen&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Kalam&display=swap" rel="stylesheet">
+</head>
+
+<body>
+
+<style>
+  html, body {
+    height: 100vh;
+    margin: 0;
+    padding: 0;
+    overflow-x: hidden;   /* new */
+    overflow-y: auto;
+  }
+
+  #initialBackground {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100vh;
+    background-color: rgba(194, 255, 255, 0.8); /* Slightly transparent white background */
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    transition: opacity 0.5s ease; /* Add a transition effect for smooth opacity changes */
+    z-index: 9999;
+  }
+
+  #initialBackground.hide {
+    opacity: 0; /* Make the background disappear when the 'hide' class is added */
+    pointer-events: none; /* Disable pointer events when hidden */
+  }
+
+  .content {
+    text-align: center;
+    max-width: 600px;
+    height: 100px;
+  }
+
+</style>
+
+<div id="initialBackground">
+  <div class="content">
+    <h1>Your Website Title</h1>
+    <p>Welcome to your website. Scroll down to explore.</p>
+  </div>
+</div>
+
+
+<script type="text/javascript">
+
+  document.addEventListener("DOMContentLoaded", function() {
+    var initialBackground = document.getElementById("initialBackground");
+
+    window.onscroll = function() {
+      console.log("scroll")
+      // Check if the user has scrolled
+      if (window.scrollY > 10) {
+        console.log("scroll")
+        // Add the 'hide' class to fade out the initial background
+        initialBackground.classList.add("hide");
+      } else {
+        console.log("no scroll")
+      }
+    };
+
+    // setTimeout(function () {
+    //   initialBackground.classList.add("hide");
+    // }, 3000); // Adjust the delay as needed
+
+
+  });
+
+</script>
+</body>
+</html>
