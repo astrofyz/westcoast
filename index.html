@@ -312,10 +312,10 @@
       case 'coffee':
         return "icon/coffee_nobrd.png";
       case 'icecream':
-        return "icon/gelato_nobrd.png";
+        return "icon/icecream_nobrd.png";
       case 'trailhead':
-        return "icon/trailhead.png";
-      case 'Animals':
+        return "icon/trailhead_nobrd.png";
+      case 'lighthouse':
         return "icon/lighthouse_nobrd.png";
       default:
         return "icon/lighthouse_nobrd.png";
@@ -335,7 +335,7 @@
   clickLegend["camp"] = true;
   clickLegend["coffee"] = true;
   clickLegend["icecream"] = true;
-  clickLegend["Animals"] = true;
+  clickLegend["lighthouse"] = true;
   clickLegend["trailhead"] = true;
   // clickLegend["Food"] = false;
 
@@ -847,8 +847,6 @@
                         clickLegend["camp"] = !clickLegend["camp"]
                         legendSvg.selectAll("text.camp").style("fill", clickLegend["camp"] ? "black" : "gray");
                         update()
-                        // d3.selectAll("image.svg.camp").style("opacity", +clickLegend["camp"])
-                        // legendSvg.selectAll("text.camp").style("fill", clickLegend["camp"] ? "black" : "gray");
                       })
                       .style("z-index", 1000);
 
@@ -865,7 +863,6 @@
                         clickLegend["coffee"] = !clickLegend["coffee"]
                         legendSvg.selectAll("text.coffee").style("fill", clickLegend["coffee"] ? "black" : "gray");
                         update()
-                        // d3.selectAll("image.svg.coffee").style("opacity", +clickLegend["coffee"])
                       })
                       .style("z-index", 1000);
 
@@ -875,12 +872,11 @@
                       .attr("width", 45)
                       .attr("height", 45)
                       .style("fill", "none")
-                      .attr("xlink:href", "icon/gelato_nobrd.png")
+                      .attr("xlink:href", "icon/icecream_nobrd.png")
                       .attr("alignment-baseline", "middle")
                       .style("cursor", "pointer")
                       .on("click", function() {
                         clickLegend["icecream"] = !clickLegend["icecream"]
-                        // d3.selectAll("image.svg.icecream").style("opacity", +clickLegend["icecream"])
                         legendSvg.selectAll("text.icecream").style("fill", clickLegend["icecream"] ? "black" : "gray");
                         update()
                       })
@@ -896,9 +892,8 @@
                       .attr("alignment-baseline", "middle")
                       .style("cursor", "pointer")
                       .on("click", function() {
-                        clickLegend["Animals"] = !clickLegend["Animals"]
-                        // d3.selectAll("image.svg.Animals").style("opacity", +clickLegend["Animals"])
-                        legendSvg.selectAll("text.Animals").style("fill", clickLegend["Animals"] ? "black" : "gray");
+                        clickLegend["lighthouse"] = !clickLegend["lighthouse"]
+                        legendSvg.selectAll("text.lighthouse").style("fill", clickLegend["lighthouse"] ? "black" : "gray");
                         update()
                       })
                       .style("z-index", 1000);
@@ -909,12 +904,11 @@
                       .attr("width", 45)
                       .attr("height", 45)
                       .style("fill", "none")
-                      .attr("xlink:href", "icon/trailhead.png")
+                      .attr("xlink:href", "icon/trailhead_nobrd.png")
                       .attr("alignment-baseline", "middle")
                       .style("cursor", "pointer")
                       .on("click", function() {
                         clickLegend["trailhead"] = !clickLegend["trailhead"]
-                        // d3.selectAll("image.svg.Animals").style("opacity", +clickLegend["Animals"])
                         legendSvg.selectAll("text.trailhead").style("fill", clickLegend["trailhead"] ? "black" : "gray");
                         update()
                       })
@@ -930,6 +924,12 @@
                       // .style("font-family", "Kalam, light")
                       .style("font-family", "Beth Ellen")
                       .attr("alignment-baseline", "middle")
+                      .style("cursor", "pointer")
+                      .on("click", function() {
+                        clickLegend["camp"] = !clickLegend["camp"]
+                        legendSvg.selectAll("text.camp").style("fill", clickLegend["camp"] ? "black" : "gray");
+                        update()
+                      })
                       .style("z-index", 1000);
 
               legendSvg.append("text")
@@ -941,6 +941,12 @@
                       .style("fill", clickLegend["coffee"] ? "black" : "gray")
                       .style("font-family", "Beth Ellen")
                       .attr("alignment-baseline", "middle")
+                      .style("cursor", "pointer")
+                      .on("click", function() {
+                        clickLegend["coffee"] = !clickLegend["coffee"]
+                        legendSvg.selectAll("text.coffee").style("fill", clickLegend["coffee"] ? "black" : "gray");
+                        update()
+                      })
                       .style("z-index", 1000);
 
               legendSvg.append("text")
@@ -952,17 +958,29 @@
                       .style("fill", clickLegend["icecream"] ? "black" : "gray")
                       .style("font-family", "Beth Ellen")
                       .attr("alignment-baseline", "middle")
+                      .style("cursor", "pointer")
+                      .on("click", function() {
+                        clickLegend["icecream"] = !clickLegend["icecream"]
+                        legendSvg.selectAll("text.icecream").style("fill", clickLegend["icecream"] ? "black" : "gray");
+                        update()
+                      })
                       .style("z-index", 1000);
 
               legendSvg.append("text")
                       .attr("x", 90)
                       .attr("y", 215)
                       .text("Points of interest")
-                      .attr("class", "Animals")
+                      .attr("class", "lighthouse")
                       .style("font-size", "18px")
-                      .style("fill", clickLegend["Animals"] ? "black" : "gray")
+                      .style("fill", clickLegend["lighthouse"] ? "black" : "gray")
                       .style("font-family", "Beth Ellen")
                       .attr("alignment-baseline", "middle")
+                      .style("cursor", "pointer")
+                      .on("click", function() {
+                        clickLegend["lighthouse"] = !clickLegend["lighthouse"]
+                        legendSvg.selectAll("text.lighthouse").style("fill", clickLegend["lighthouse"] ? "black" : "gray");
+                        update()
+                      })
                       .style("z-index", 1000);
 
               legendSvg.append("text")
@@ -974,6 +992,12 @@
                       .style("fill", "black")
                       .style("font-family", "Beth Ellen")
                       .attr("alignment-baseline", "middle")
+                      .style("cursor", "pointer")
+                      .on("click", function() {
+                        clickLegend["trailhead"] = !clickLegend["trailhead"]
+                        legendSvg.selectAll("text.trailhead").style("fill", clickLegend["trailhead"] ? "black" : "gray");
+                        update()
+                      })
                       .style("z-index", 1000);
             }
 
