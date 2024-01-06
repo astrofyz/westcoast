@@ -7,9 +7,8 @@
 
   <link rel="stylesheet" href="https://unpkg.com/leaflet@1.0.3/dist/leaflet.css" />
   <script src="https://unpkg.com/leaflet@1.0.3/dist/leaflet.js"></script>
+  <script src="https://unpkg.com/leaflet-providers@latest/leaflet-providers.js"></script>
 
-  <!-- <script src="http://cdn.leafletjs.com/leaflet-0.7/leaflet.js"></script> -->
-  <!--  <script src='leaflet-omnivore.min.js'></script>-->
   <script src='//api.tiles.mapbox.com/mapbox.js/plugins/leaflet-omnivore/v0.3.1/leaflet-omnivore.min.js'></script>
   <script src="http://d3js.org/d3.v5.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/d3-delaunay@6"></script>
@@ -17,6 +16,8 @@
   <link rel="preconnect" href="https://fonts.gstatic.com">
   <link href="https://fonts.googleapis.com/css2?family=Beth+Ellen&display=swap" rel="stylesheet">
   <link href="https://fonts.googleapis.com/css2?family=Kalam&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Amatic+SC&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Schoolbell&display=swap" rel="stylesheet">
 </head>
 
 <body>
@@ -31,13 +32,129 @@
     height: 100%;
     margin: 0;
     padding: 0;
+    overflow-x: hidden;   /* new */
   }
+
+  #initialBackground {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100vh;
+    background: linear-gradient(rgba(255, 255, 255, 1.0), rgba(255, 255, 255, 0.65));
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    transition: opacity 2s ease; /* Add a transition effect for smooth opacity changes */
+    z-index: 9999;
+  }
+
+  #initialBackground.hide {
+    opacity: 0; /* Make the background disappear when the 'hide' class is added */
+    pointer-events: none; /* Disable pointer events when hidden */
+  }
+
+  .content {
+    text-align: center;
+    max-width: 85vh;
+  }
+
+  div.tooltip {                   /* set the CSS for tooltip divs */
+    position: fixed;         /* reference for measurement */
+    text-align: center;         /* align the text to the center */
+    font: 25px sans-serif;      /* set the font type for the tooltips */
+    border: 1px;                    /* turn off the border (0px) */
+    border-radius: 8px;         /* set how rounded the edges of the rectangle is */
+    pointer-events: none;           /* 'none' tells the mouse to ignore the rectangle */
+    z-index: 9999;
+    max-width: 100%;
+  }
+
+  div.tooltip.tooltiptext {
+    font: 25px sans-serif;
+  }
+
+  h1 {
+    font: 30px "Beth Ellen";
+  }
+
+  p {
+    font: 24px "Schoolbell";
+  }
+
+  p1 {
+    font: 18px "Schoolbell";
+  }
+
+  p2 {
+    font: 17px "Amatic SC";
+  }
+
+  .airport-label {
+    font-family: 'Beth Ellen', sans-serif;
+    font-size: 18px;
+    font-weight: bold;
+    text-align: center;
+    color: #000;
+    background: transparent;
+    border: none;
+    box-shadow: none;
+    pointer-events: none;
+    opacity: 0.0;
+    cursor: default !important; /* Set cursor to default */
+  }
+
 
 </style>
 
+<div id="initialBackground">
+  <div class="content">
+    <h1>(B)West coast map</h1>
+    <p>For two weeks in Aug'23, me and my friend traveled along the west coast of the US. </p>
+    <p>It was an unforgettable adventure, so I decided to create a map and highlight at least some of the visited places </p>
+    <p1>(also I just wanted to try building an interactive map)</p1>
+    <p>Anyway, you can click on icons in the legend, hover over markers on the map to see pictures, hiking routes or ice cream reviews</p>
+    <p>Enjoy!</p>
+    <p2>@astrofyz</p2>
+
+
+<!--    <p>This is the map of the road trip we've made in Aug'23</p>-->
+<!--    <p>For two weeks we traveled along the west coast of US from San Francisco to Seattle</p>-->
+<!--    <p>On the map I've highlighted campgrounds, coffee and ice cream shops, trailheads and some more or less random places with good memories attached.</p>-->
+<!--    <p>I did that to commemorate this unforgettable adventure and to learn some new stuff in process.</p>-->
+<!--    <p>Click on the legend, hover over markers, enjoy! (Or not, that's your choice)</p>-->
+  </div>
+</div>
+
+
 <script type="text/javascript">
 
-  var unitRadius = 22;     // The pixel radius of a point of size = 1
+  document.addEventListener("DOMContentLoaded", function() {
+    var initialBackground = document.getElementById("initialBackground");
+
+    initialBackground.addEventListener("click", function() {
+      console.log("scroll")
+      // Check if the user has scrolled
+      if (initialBackground.scrollTop > 10) {
+        console.log("scroll")
+        // Add the 'hide' class to fade out the initial background
+        initialBackground.classList.add("hide");
+      } else {
+        console.log("no scroll")
+      }
+    });
+
+    setTimeout(function () {
+      initialBackground.classList.add("hide");
+    }, 10000); // Adjust the delay as needed
+
+
+  });
+
+
+  var unitRadius = 10;     // The pixel radius of a point of size = 1
+  var backgroundNotes = "url('pattern_orange.png')"
+  var backgroundNodes = "pattern_red.png"
 
 
   var mergePoints = function(a, b) {
@@ -134,12 +251,27 @@
   //https://api.mapbox.com/styles/v1/astrofyz/clmul907w05lq01qielmlansh/tiles/256/{z}/{x}/{y}@2x?access_token=pk.eyJ1IjoiYXN0cm9meXoiLCJhIjoiY2xtMWF4MTBxMzByMTNxcGkwc2cycDlhMSJ9.0o3QKpA4eMmFsX2pfk-Idw
 
 
-  L.tileLayer(
-          'https://api.mapbox.com/styles/v1/astrofyz/clmuntcu505n101qb24x3hc6r/tiles/256/{z}/{x}/{y}@2x?access_token=pk.eyJ1IjoiYXN0cm9meXoiLCJhIjoiY2xtMWF4MTBxMzByMTNxcGkwc2cycDlhMSJ9.0o3QKpA4eMmFsX2pfk-Idw', {
-            attribution: '© OpenStreetMap | Mapbox',
-            maxZoom: 22,
-          }).addTo(map);
+  // L.tileLayer(
+  //         'https://api.mapbox.com/styles/v1/astrofyz/clmuntcu505n101qb24x3hc6r/tiles/256/{z}/{x}/{y}@2x?access_token=pk.eyJ1IjoiYXN0cm9meXoiLCJhIjoiY2xtMWF4MTBxMzByMTNxcGkwc2cycDlhMSJ9.0o3QKpA4eMmFsX2pfk-Idw', {
+  //           attribution: '© OpenStreetMap | Mapbox',
+  //           maxZoom: 22,
+  //         }).addTo(map);
 
+  L.tileLayer.provider('Stadia.StamenWatercolor').addTo(map);
+
+  // Define city coordinates and names
+  var cities = [
+    { name: "City1", coordinates: [37.7749, -122.4194] },
+    { name: "City2", coordinates: [47.6061, -122.3328] }
+  ];
+
+  var markerSFO = new L.marker([37.6163, -122.3861], { opacity: 0.0 }); //opacity may be set to zero
+  markerSFO.bindTooltip("San Francisco", {permanent: true, className: "airport-label", offset: [0, 10], interactive: false, direction: "right" });
+  markerSFO.addTo(map);
+
+  var markerSEA = new L.marker([47.44518, -122.29694], { opacity: 0.0 }); //opacity may be set to zero
+  markerSEA.bindTooltip("Seattle", {permanent: true, className: "airport-label", offset: [0, 0], interactive: false, direction: "right"});
+  markerSEA.addTo(map);
 
   var Tooltip = d3.select("#map")
           .append("div")
@@ -152,6 +284,8 @@
           .style("opacity", 0)
           .style("data-contatiner", "body")
           .style("font", "Beth Ellen")
+          .style("text-shadow", "-1px 0 #feeefd, 0 1px #feeefd, 1px 0 #feeefd, 0 -1px #feeefd")
+          .style("white-space", "pre-wrap")
 
   function getImagePath(type) {
     switch (type) {
@@ -181,16 +315,16 @@
 
   var clickLegend = {};
   clickLegend["camp"] = true;
-  clickLegend["coffee"] = false;
-  clickLegend["icecream"] = false;
-  clickLegend["Animals"] = false;
+  clickLegend["coffee"] = true;
+  clickLegend["icecream"] = true;
+  clickLegend["Animals"] = true;
   clickLegend["trailhead"] = true;
   // clickLegend["Food"] = false;
 
 
   var legendSvg = d3.select("body").append("svg")
           .attr("class", "legend")
-          .attr("width", 245)
+          .attr("width", 270)
           .attr("height", 280)
           .style("position", "absolute")
           .style("top", "10px")
@@ -204,7 +338,7 @@
 
   var color = d3.scaleLinear()
           .domain([13, 25])
-          .range(["#ffb14e", "#9d02d7"]);
+          .range(["#0e31dc", "#6b0edc"]);
 
   var allHikesGroup = g.append("g").attr("class", "all-hikes-group");
   var allPointsHikes = new Map()
@@ -273,14 +407,6 @@
     });
   }
 
-  // addHike({'fname': 'Day_1', 'distance': '6.51', 'elevgain': '1,137', 'h':2, 'm': 24, 'activityID': 9654069895})
-  // addHike({'fname': 'Day_2', 'distance': '8.94', 'elevgain': '1,321', 'h':3, 'm': 23, 'activityID': 9661365815})
-  // addHike({'fname': 'Day_3', 'distance': '7.03', 'elevgain': '1,068', 'h':2, 'm': 20, 'activityID': 9661367269})
-  // addHike({'fname': 'Foggy_forest_hike', 'distance': '10.13', 'elevgain': '1,932', 'h':3, 'm': 35, 'activityID': 9675057750})
-  // addHike({'fname': 'Rainforest_walk', 'distance': '6.93', 'elevgain': '534', 'h':2, 'm': 16, 'activityID': 9707359219})
-  // addHike({'fname': 'Walk_along_the_river', 'distance': '8.60', 'elevgain': '1,326', 'h':3, 'm': 15, 'activityID': 9708447961})
-  // addHike({'fname': 'Attempt_to_summit_mt_Washington', 'distance': '3.85', 'elevgain': '1,440', 'h':1, 'm': 56, 'activityID': 9719200738})
-
   function addPlaces() {
     return new Promise(function (resolve, reject) {
       d3.csv("df_places_subset.csv")
@@ -292,7 +418,7 @@
                   pointObj.name = d.name
                   pointObj.type = d.type
                   pointObj.pic = d.pic
-                  pointObj.notes = d.notes
+                  pointObj.notes = d.notes.replace(/\\n/g, '\n')
                   pointObj.ID = d.timestamp
                   allPointsPlaces.push(pointObj)
                   d.LatLng = new L.LatLng(parseFloat(d.latitude), parseFloat(d.longitude))
@@ -303,6 +429,135 @@
                 reject(error);
               });
     });
+  }
+
+  function handleMouseOver(element) {
+    if (element.points[0].type != "trailhead") {
+      // console.log(element.points[0].pic, element.points[0])
+      if (element.points[0].pic !== "") {
+        var filename = element.points[0].pic
+        var x0 = d3.event.pageX
+        var y0 = d3.event.pageY
+        var W = map.getSize().x
+        var H = map.getSize().y
+        var imsize = Math.round(Math.min(W, H) / 2.5)
+        var R = Math.sqrt(2) * imsize / 2
+        var A = 2 * W - (4 * x0)
+        var B = 2 * H - (4 * y0)
+        var u = A * R / Math.sqrt(A * A + B * B)
+        var v = B * R / Math.sqrt(A * A + B * B)
+        var topCorner = y0 + v - imsize / 2
+        var leftCorner = x0 + u - imsize / 2
+        var img_path = "<img src=pic/"+filename+" width="+imsize+" height="+imsize+">"
+
+        // console.log(img_path, leftCorner, topCorner)
+        Tooltip
+                .transition()
+                .duration(200)
+                .style("opacity", .95)
+
+        Tooltip
+                .html(img_path) //this will add the image on mouseover
+                .style("left", leftCorner + "px")     // переподсчитать положения с window.innerWidth window.innerHeight и поставить его туда, куда надо
+                .style("top", topCorner + "px")
+      }
+
+      else if (element.points[0].name !== "") {
+        var W = map.getSize().x
+        var H = map.getSize().y
+        var textsize = Math.round(Math.min(W, H) / 5)
+
+        if (element.points[0].notes !== "") {
+          embed_path = element.points[0].name+'<br>H.K.: '+element.points[0].notes
+        }
+        else {
+          embed_path = element.points[0].name
+        }
+
+        TooltipText
+                .html(embed_path)
+                .style("left", (d3.event.pageX+5) + "px")
+                .style("top", (d3.event.pageY+5) + "px")
+                .style("opacity", 1.)
+                .style("position", "fixed")
+                .style("font-size", "15px")
+                .style("font-family", "Kalam, light")
+                .style("width", "max-content")
+                .style("max-width", textsize+"px")
+                .style("padding", "10px")
+                .style("text-align", "left")
+                .style("border", "2px solid #f9e9cd")
+                // .style("filter", "blur(10px)")
+                .style("background", backgroundNotes)  // Use the pattern as background
+                .style("background-repeat", "no-repeat")
+                // .style("background-color", "#f9e9cd")
+      }
+    }
+    else {
+      // console.log("this is a trailhead", element.points[0])
+      var defs = svg.append("defs");
+      var filter = defs.append("filter")
+              .attr("id", "glow")
+              .attr("x", "-50%")
+              .attr("y", "-50%")
+              .attr("width", "100%")
+              .attr("height", "100%");
+
+      filter.append("feGaussianBlur")
+              .attr("in", "SourceGraphic")
+              .attr("stdDeviation", "3"); // Adjust the standard deviation for the glow effect
+
+      allHikesGroup.selectAll(`.hike-${element.points[0].ID}`)
+              .style("stroke", '#b009c0')
+              .style("stroke-width", 3.)
+              .style("stroke-dasharray", "none")
+              // .attr("filter", "url(#glow)");
+
+
+      var embed_path = element.points[0].notes
+      TooltipText
+              .html(embed_path)
+              .style("left", (d3.event.pageX+5) + "px")
+              .style("top", (d3.event.pageY+5) + "px")
+              .style("opacity", 1.)
+              .style("position", "fixed")
+              .style("font-size", "15px")
+              .style("font-family", "Beth Ellen, regular")
+              .style("width", "max-content")
+              .style("max-width", "150px")
+              .style("padding", "10px")
+              .style("text-align", "left")
+              .style("border", "2px solid #f9e9cd")
+              .style("background", backgroundNotes)  // Use the pattern as background
+              .style("background-repeat", "no-repeat")
+              // .style("background-color", "#f9e9cd")
+              .transition()
+              .duration(200)
+    }
+  }
+
+  function handleMouseOut(element){
+    if (element.points[0].type != "trailhead") {
+      Tooltip
+              .transition()                                    // declare the transition properties to fade-out the div
+              .duration(500)                                  // it shall take 500ms
+              .style("opacity", 0);                           // and go all the way to an opacity of nil
+      TooltipText
+              .transition()
+              .duration(500)
+              .style("opacity", 0);
+    }
+    else {
+      allHikesGroup.selectAll(`.hike-${element.points[0].ID}`)
+              .style("stroke", "#d53f50")
+              .style("stroke-width", 2.)
+              .style("stroke-dasharray", "2.5")
+
+      TooltipText
+              .transition()
+              .duration(200)
+              .style("opacity", 0);
+    }
   }
 
 
@@ -343,21 +598,20 @@
             // console.log(allDriveGroup)
             // console.log("all places loaded", allPointsPlaces)
 
-            map.on("viewreset", function() {alert("VIEW RESET"); update()});  // doesn't fire at zoom events in leaflet > 1.0
+            // map.on("viewreset", function() {alert("VIEW RESET"); update(); updateLegend()});  // doesn't fire at zoom events in leaflet > 1.0
             map.on("zoomend", function(){
-              // allHikesGroup.selectAll("*").remove();
-              // allHikesGroup.selectAll("*").remove();
-              // allDriveGroup.selectAll(".path").remove()
-              // d3.selectAll("image.svg").remove();  // what else should I remove
-              update()})  // g > *
+              updateLegend()
+              update()
+            })  // g > *
             map.on("moveend", function(){
-              // allHikesGroup.selectAll("*").remove();
+              updateLegend()
               update()
             })
 
+            updateLegend()
             update()
 
-            function updateElements(data, group, className, lineFunction, strokeColor, strokeWidth) {
+            function updateElements(data, group, className, lineFunction, strokeColor, strokeWidth, strokeDashArray) {
               var clusters = data.map(function (d) {
                 var p = map.latLngToLayerPoint([d.lat, d.lng]);
                 return {
@@ -375,13 +629,17 @@
                                       .attr("d", lineFunction)
                                       .style("stroke", strokeColor)
                                       .style("stroke-width", strokeWidth)
-                                      .style("fill", "none"),
+                                      .style("fill", "none")
+                                      .style("stroke-dasharray", strokeDashArray),
                               update => update.attr("d", lineFunction),
                               exit => exit.remove()
                       );
             }
 
             function update() {
+              // console.log("update is called")
+              // console.log(allPointsPlaces.filter(item => clickLegend[item.type]))
+
               hikeList.forEach(function (hike) {
                 updateElements(
                         allPointsHikes.get((hike.activityID).toString()),
@@ -389,7 +647,8 @@
                         `hike-${hike.activityID}`,
                         line,
                         '#d53f50',
-                        2.5
+                        2.,
+                        "2.5"
                 );
               });
 
@@ -400,7 +659,8 @@
                         `drive-${drive.date}`,
                         line,
                         color(drive.date),
-                        3
+                        3,
+                        "none"
                 );
               });
 
@@ -408,30 +668,6 @@
 
               var clusters = overlap(allPointsPlaces.filter(item => clickLegend[item.type]))
 
-              // console.log(clusters.filter(function(d) {return (d.r > unitRadius)}))
-              // console.log(d.p)
-
-              // var clusterMarks = g.selectAll(".cluster")
-              //         .data(clusters.filter(function(d) {return (d.r > unitRadius)}))
-              //         .join(
-              //                 enter => {
-              //                   enter
-              //                           .append("circle")
-              //                           .attr("cx", function (d) { return d.x; })
-              //                           .attr("cy", function (d) { return d.y; })
-              //                           .attr("r", function (d) { return d.r; })
-              //                           .attr("fill", "blue")
-              //                           .attr("opacity", 0.3);
-              //
-              //                 },
-              //                 update => {
-              //                   update
-              //                           .attr("cx", function (d) { return d.x; })
-              //                           .attr("cy", function (d) { return d.y; })
-              //                           .attr("r", function (d) { return d.r; });
-              //                 },
-              //                 exit => exit.remove()
-              //         )
 
               var clusterMarks = g.selectAll(".cluster")
                       .data(clusters.filter(function(d) {return (d.r > unitRadius)}))
@@ -439,12 +675,24 @@
                               enter => {
                                 var enterSelection = enter.append("g").attr("class", "cluster");
 
+                                enterSelection.append("defs")
+                                        .append("pattern")
+                                        .attr("id", function(d, i) { return "pattern-" + i; })
+                                        .attr("width", 320) // Adjust width based on your pattern size
+                                        .attr("height", 320) // Adjust height based on your pattern size
+                                        .attr("patternUnits", "userSpaceOnUse")
+                                        .append("image")
+                                        .attr("href", backgroundNodes) // Replace with your pattern image
+                                        .attr("width", 320)
+                                        .attr("height", 320);
+
                                 enterSelection.append("circle")
                                         .attr("cx", function (d) { return d.x; })
                                         .attr("cy", function (d) { return d.y; })
-                                        .attr("r", function (d) { return d.r/2; })
-                                        .attr("fill", "blue")
-                                        .attr("opacity", 0.3);
+                                        .attr("r", function (d) { return d.r; })
+                                        // .attr("fill", "blue")
+                                        .attr("fill", function(d, i) { return "url(#pattern-" + i + ")"; })
+                                        .attr("opacity", 0.7);
 
                                 enterSelection.append("text")
                                         .text(function (d) {
@@ -456,15 +704,19 @@
                                         .attr("font-size", function (d) {
                                           return d.r / ((d.r * 10) / 200);
                                         })
+                                        .style("font-family", "Beth Ellen, light")
                                         .attr("dy", function (d) {
                                           return d.r / ((d.r * 25) / 100);
-                                        });
+                                        })
+                                        // .style("border", "5px solid white");
+                                        .style("text-shadow", "-1px 0 #feeefd, 0 1px #feeefd, 1px 0 #feeefd, 0 -1px #feeefd")
+                                        .style("blur", "1px")
                               },
                               update => {
                                 update.select("circle")
                                         .attr("cx", function (d) { return d.x; })
                                         .attr("cy", function (d) { return d.y; })
-                                        .attr("r", function (d) { return d.r/2; });
+                                        .attr("r", function (d) { return d.r; });
 
                                 update.select("text")
                                         .text(function (d) {
@@ -499,18 +751,18 @@
                                         })
                                         .on("mouseover", function(d) {
                                           // Your existing mouseover logic
-                                          // handleMouseOver(d);
-                                          console.log(d)
+                                          handleMouseOver(d);
+                                          // console.log(d)
                                         })
                                         .on("mouseout", function(d) {
-                                          // handleMouseOut(d);
+                                          handleMouseOut(d);
                                           // Your existing mouseout logic
-                                          console.log("out")
+                                          // console.log("out")
                                         });
 
                               },
                               update => {
-                                console.log(update)
+                                // console.log(update)
                                 update
                                         .attr("transform", function(d) {
                                           return `translate(${d.x-22},${d.y-22})`;})
@@ -519,27 +771,49 @@
                                           return getImagePath(d.points[0].type)})
                                         .on("mouseover", function(d) {
                                           // Your existing mouseover logic
-                                          // handleMouseOver(d);
-                                          console.log(d)
+                                          handleMouseOver(d);
+                                          // console.log(d)
                                         })
                                         .on("mouseout", function(d) {
-                                          // handleMouseOut(d);
+                                          handleMouseOut(d);
                                           // Your existing mouseout logic
-                                          console.log("out")
+                                          // console.log("out")
                                         });
                               },
                               exit => exit.remove()
                       );
+            }
 
+            function updateLegend() {
               legendSvg.selectAll("*").remove();
+
+              legendSvg
+                      .append("pattern")
+                      .attr("id", function(d, i) { return "patternLegend"; })
+                      .attr("width", 320) // Adjust width based on your pattern size
+                      .attr("height", 320) // Adjust height based on your pattern size
+                      .attr("patternUnits", "userSpaceOnUse")
+                      .append("image")
+                      .attr("href", "bg_legendSmall.png") // Replace with your pattern image
+                      .attr("width", 320)
+                      .attr("height", 320);
+
+              legendSvg
+                      .append("defs")
+                      .append("filter")
+                      .attr("id", "blurFilter")
+                      .append("feGaussianBlur")
+                      .attr("in", "SourceGraphic")
+                      .attr("stdDeviation", 10)
 
               legendSvg.append("rect")
                       .attr("x", 30)
                       .attr("y", 30)
-                      .attr("width", 245)
+                      .attr("width", 270)
                       .attr("height", 280)
-                      .style("fill", "blue")
-                      .style("opacity", 0.07)
+                      .attr("filter", "url(#blurFilter)")
+                      .attr("fill", function(d, i) { return "url(#patternLegend)"; })
+                      .style("opacity", 0.90)
                       .style("z-index", 1000);
 
               legendSvg.append("image")
@@ -550,10 +824,13 @@
                       .style("fill", "none")
                       .attr("xlink:href", "icon/camp_nobrd.png")
                       .attr("alignment-baseline", "middle")
+                      .style("cursor", "pointer")
                       .on("click", function() {
                         clickLegend["camp"] = !clickLegend["camp"]
-                        d3.selectAll("image.svg.camp").style("opacity", +clickLegend["camp"])
                         legendSvg.selectAll("text.camp").style("fill", clickLegend["camp"] ? "black" : "gray");
+                        update()
+                        // d3.selectAll("image.svg.camp").style("opacity", +clickLegend["camp"])
+                        // legendSvg.selectAll("text.camp").style("fill", clickLegend["camp"] ? "black" : "gray");
                       })
                       .style("z-index", 1000);
 
@@ -565,10 +842,12 @@
                       .style("fill", "none")
                       .attr("xlink:href", "icon/coffee_nobrd.png")
                       .attr("alignment-baseline", "middle")
+                      .style("cursor", "pointer")
                       .on("click", function() {
                         clickLegend["coffee"] = !clickLegend["coffee"]
-                        d3.selectAll("image.svg.coffee").style("opacity", +clickLegend["coffee"])
                         legendSvg.selectAll("text.coffee").style("fill", clickLegend["coffee"] ? "black" : "gray");
+                        update()
+                        // d3.selectAll("image.svg.coffee").style("opacity", +clickLegend["coffee"])
                       })
                       .style("z-index", 1000);
 
@@ -580,10 +859,12 @@
                       .style("fill", "none")
                       .attr("xlink:href", "icon/gelato_nobrd.png")
                       .attr("alignment-baseline", "middle")
+                      .style("cursor", "pointer")
                       .on("click", function() {
                         clickLegend["icecream"] = !clickLegend["icecream"]
-                        d3.selectAll("image.svg.icecream").style("opacity", +clickLegend["icecream"])
+                        // d3.selectAll("image.svg.icecream").style("opacity", +clickLegend["icecream"])
                         legendSvg.selectAll("text.icecream").style("fill", clickLegend["icecream"] ? "black" : "gray");
+                        update()
                       })
                       .style("z-index", 1000);
 
@@ -595,10 +876,12 @@
                       .style("fill", "none")
                       .attr("xlink:href", "icon/lighthouse_nobrd.png")
                       .attr("alignment-baseline", "middle")
+                      .style("cursor", "pointer")
                       .on("click", function() {
                         clickLegend["Animals"] = !clickLegend["Animals"]
-                        d3.selectAll("image.svg.Animals").style("opacity", +clickLegend["Animals"])
+                        // d3.selectAll("image.svg.Animals").style("opacity", +clickLegend["Animals"])
                         legendSvg.selectAll("text.Animals").style("fill", clickLegend["Animals"] ? "black" : "gray");
+                        update()
                       })
                       .style("z-index", 1000);
 
@@ -610,6 +893,13 @@
                       .style("fill", "none")
                       .attr("xlink:href", "icon/trailhead.png")
                       .attr("alignment-baseline", "middle")
+                      .style("cursor", "pointer")
+                      .on("click", function() {
+                        clickLegend["trailhead"] = !clickLegend["trailhead"]
+                        // d3.selectAll("image.svg.Animals").style("opacity", +clickLegend["Animals"])
+                        legendSvg.selectAll("text.trailhead").style("fill", clickLegend["trailhead"] ? "black" : "gray");
+                        update()
+                      })
                       .style("z-index", 1000);
 
               legendSvg.append("text")
@@ -619,7 +909,8 @@
                       .attr("class", "camp")
                       .style("font-size", "18px")
                       .style("fill", clickLegend["camp"] ? "black" : "gray")
-                      .style("font-family", "Kalam, light")
+                      // .style("font-family", "Kalam, light")
+                      .style("font-family", "Beth Ellen")
                       .attr("alignment-baseline", "middle")
                       .style("z-index", 1000);
 
@@ -630,7 +921,7 @@
                       .attr("class", "coffee")
                       .style("font-size", "18px")
                       .style("fill", clickLegend["coffee"] ? "black" : "gray")
-                      .style("font-family", "Kalam, light")
+                      .style("font-family", "Beth Ellen")
                       .attr("alignment-baseline", "middle")
                       .style("z-index", 1000);
 
@@ -641,7 +932,7 @@
                       .attr("class", "icecream")
                       .style("font-size", "18px")
                       .style("fill", clickLegend["icecream"] ? "black" : "gray")
-                      .style("font-family", "Kalam, light")
+                      .style("font-family", "Beth Ellen")
                       .attr("alignment-baseline", "middle")
                       .style("z-index", 1000);
 
@@ -652,7 +943,7 @@
                       .attr("class", "Animals")
                       .style("font-size", "18px")
                       .style("fill", clickLegend["Animals"] ? "black" : "gray")
-                      .style("font-family", "Kalam, light")
+                      .style("font-family", "Beth Ellen")
                       .attr("alignment-baseline", "middle")
                       .style("z-index", 1000);
 
@@ -663,26 +954,13 @@
                       .attr("class", "trailhead")
                       .style("font-size", "18px")
                       .style("fill", "black")
-                      .style("font-family", "Kalam, light")
+                      .style("font-family", "Beth Ellen")
                       .attr("alignment-baseline", "middle")
                       .style("z-index", 1000);
-
             }
 
           })
           .catch(error => {console.log("error loading promises", error)})
-
-
-
-
-
-
-
-
-
-
-
-
 
 
 </script>
