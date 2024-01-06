@@ -271,9 +271,10 @@
     return clusters.filter(function(v) { return !!v; });
   };
 
-  console.log(window.innerHeight, window.innerWidth)
+  var initailZoomLevel = ((window.innerHeight / window.innerWidth) > 1.5) ? 7 : 6
+  var initialCenterCrd = ((window.innerHeight / window.innerWidth) > 1.5) ? [43.281204464332774, -122.65136718750001] : [44.070714,-124.115619]
 
-  var map = L.map('map').setView([44.070714,-124.115619], 6.01);
+  var map = L.map('map').setView(initialCenterCrd, initailZoomLevel);
   // var map = L.map('map').setView([38.027336, -122.826623], 13.01);
 
   L.tileLayer.provider('Stadia.StamenWatercolor').addTo(map);
@@ -647,7 +648,6 @@
             }
 
             function update() {
-              console.log(map.getZoom())
               hikeList.forEach(function (hike) {
                 updateElements(
                         allPointsHikes.get((hike.activityID).toString()),
@@ -743,14 +743,14 @@
                                 var group = enter.append("g")
                                         .attr("class", "node")
                                         .attr("transform", function(d) {
-                                          return `translate(${d.x-22},${d.y-22})`
+                                          return `translate(${d.x-window.innerWidth*0.035},${d.y-window.innerWidth*0.035})`
                                         })
                                         .style("pointer-events", "all"); // Add this line
 
                                 group.append("svg:image")
                                         .attr('class', d => `svg ${d.points[0].type}`)
-                                        .attr("width", 45)
-                                        .attr("height", 45)
+                                        .attr("width", "7vw")
+                                        .attr("height", "7vw")
                                         .attr("xlink:href", function(d){
                                           return getImagePath(d.points[0].type)
                                         })
@@ -766,7 +766,7 @@
                                 // console.log(update)
                                 update
                                         .attr("transform", function(d) {
-                                          return `translate(${d.x-22},${d.y-22})`;})
+                                          return `translate(${d.x-window.innerWidth*0.035},${d.y-window.innerWidth*0.035})`;})
                                         .select("image")
                                         .attr("xlink:href", function(d){
                                           return getImagePath(d.points[0].type)})
