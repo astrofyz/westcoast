@@ -1,0 +1,62 @@
+timestamp,latitude,longitude,address,name,date,time,type,notes,pic
+9654069895,38.04072,-122.79923,Day1,Day_1,2023-08-14,12:00:00,trailhead,"Distance: 6.51 mi\nElev gain: 1,137 ft\nTime: 2h 24m",
+9661365815,38.01674,-122.85352,Day2,Day_2,2023-08-15,12:00:00,trailhead,"Distance: 8.94 mi\nElev gain: 1,321 ft\nTime: 3h 23m",
+9661367269,37.97035,-122.79080,Day3,Day_3,2023-08-14,12:00:00,trailhead,"Distance: 7.03 mi\nElev gain: 1,068 ft\nTime: 2h 20m",
+9675057750,41.59382,-124.09873,Foggy,Foggy_forest_hike',2023-08-14,12:00:00,trailhead,"Distance: 10.13 mi\nElev gain: 1,932 ft\nTime: 3h 35m",
+9707359219,47.95780,-123.84241,Rainforest,Rainforest_walk,2023-08-14,12:00:00,trailhead,"Distance: 6.93 mi\nElev gain: 534 ft\nTime: 2h 16m",
+9708447961,48.04686,-123.60226,River,Walk_along_the_river,2023-08-14,12:00:00,trailhead,"Distance: 8.60 mi\nElev gain: 1,326 ft\nTime: 3h 15m",
+9719200738,47.51877,-123.23690,Mount,Attempt_to_summit_mt_Washington,2023-08-14,12:00:00,trailhead,"Distance: 3.85 mi\nElev gain: 1,440 ft\nTime: 1h 56m",
+1691887994.954,37.8000261,-122.4410075,"3258 Scott St, San Francisco, CA 94123, USA",'Napizza,2023-08-12,19:53:14.954000,Food,"Good pizza - not too charred for my taste. Nice venue with friendly staff"4,
+1691939815.471,37.8102263,-122.4118745,"The Embarcadero, San Francisco, CA 94133, USA",PIER 39,2023-08-13,10:16:55.471000,Animals,Sea lions,pier39_big.png
+1691937186.88,37.8047813,-122.4119055,"2161 Powell St, San Francisco, CA 94133, USA",Cafe Francisco,2023-08-13,09:33:06.880000,coffee,"Had to wait a bit to place our order but it was definitely worth it! Good coffee and delicious carrot cake."5,
+1691945987.486,37.7902836,-122.4054164,"338 Grant Ave, San Francisco, CA 94108, USA",Amorino Gelato,2023-08-13,11:59:47.486000,icecream,,
+9999999999,37.7860578,-122.4008541,"151 3rd St, San Francisco, CA 94103",San Francisco Museum of Modern Art,2023-08-13,13:00:00.000000,Animals,moma,moma2.png
+9999999999,37.786802,-122.402964,"71 3rd St, San Francisco, CA 94103",Oren’s Hummus,2023-08-13,14:30:00.000000,Food,"Good morning 🤤"5,
+1691975076.66,37.8001699,-122.4404629,"2257 Chestnut St, San Francisco, CA 94123, USA",Bonita Taqueria & Rotisserie,2023-08-13,20:04:36.660000,Food,,
+9999999999,37.8323932,-122.4963463,"5702 Conzelman Rd, Mill Valley, CA 94941",Golden Gate Observation Deck,2023-08-14,09:33:06.880000,Animals,Fog at overlook,ggoverlook_big.png
+9999999999,37.889,-122.630,"Stinson Beach, CA","Mt Tamalis State Park",2023-08-14,10:40:06.00000,Animals,"Fog fog fog everywhere",foggy_overlook_big.png
+9999999999,38.0149504,-122.8443726,"Woodward Valley Trail, Point Reyes Station, CA 94956",Woodward Valley Trail,2023-08-14,11:59:47.486000,Animals,Hawk with fish,ospreywithfish_big.png
+1692043334.343,38.0171785,-122.8542494,"Point Reyes Station, CA 94956, USA",Coast Campground,2023-08-14,15:02:14.343000,camp,Beautiful campground with wel maintained campsites.,coastcamp_big.png
+9999999999,37.9966009,-122.8241782,"Coast Trail, Point Reyes Station, CA 94956",Kelham Beach,2023-08-15,12:37:55.448000,Animals,Whale spine,whalespine_big.png
+1692121075.448,37.9707070,-122.7907710,"Coast Trail, Bolinas, CA 94924, USA",Wildcat Campground,2023-08-15,12:37:55.448000,camp,"Beautifully located basic campsite. Restrooms and potable water available. Amazingly close to ocean and beautiful views of the surrounding area"5,wildcat_big.png
+9999999999,37.9558391,-122.7845576,California 94924,Alamere Falls,2023-08-15,15:08:32.020000,Animals,,alamere_big.png
+1692216512.02,39.0833917,-123.473575,"6600 CA-128, Philo, CA 95466, USA",Gowan's Oak Tree,2023-08-16,15:08:32.020000,Food,,
+9999999999,39.1584395,-123.5989514,"Elk, CA","Navarro River Redwoods SP",2023-08-16,15:30:32.0000,Animals,"first redwoods",dark_trees_big.png
+9999999999,39.2733936,-123.7908218,"Van Damme Beach State Park, CA-1, Little River, CA 95456",Van Damme SP,2023-08-16,16:50:00.0000,Animals,"mne tozhe ne nravitsa or doggos",ne_nravitsa_big.png
+1692228608.524,39.4520478,-123.8135243,"Fort Bragg, CA 95437, USA",Glass Beach,2023-08-16,18:30:08.524000,Animals,Ground squirrel,squirrel_big.png
+1692228608.524,39.4930614,-123.7913788,"24100 MacKerricher Park Rd, Fort Bragg, CA 95437, USA","Pinewood Campground, MacKerricher State Park",2023-08-16,18:30:08.524000,camp,,mackerricher_big.png
+1692228608.524,39.4943897,-123.7945447,"Fort Bragg, CA 95437, USA",MacKerricher State Marine Conservation Area,2023-08-16,18:30:08.524000,Animals,Seals and pelicans,sealpelicans_big.png
+1692294477.795,40.8042461,-124.1660477,"516 2nd St, Eureka, CA 95501, USA",The Greene Lily,2023-08-17,12:47:57.795000,Food,,
+9999999999,41.3671736,"-124.0223597,","Newton B. Drury Scenic Pkwy, Orick, CA 95555",Prairie Creek Visitor Center,2023-08-17,12:47:57.795000,Animals,Replace with big tree,bigtree_big.png
+9999999999,41.5745684,-124.101361,California 95548,Hidden beach ,2023-08-18,17:46:44.400000,Animals,Beach with smoky skies,smokybeach_big.png
+9999999999,41.5516655,-124.0887271,"Klamath, CA 95548",Overlook ,2023-08-18,17:46:44.400000,Animals,Another eagle and more blackberries on the trail,blackberries_big.png
+9999999999,41.7019195,-124.0976842,"MVXV+MQ, Bertsch-Oceanview, CA 95548",Mill Creek Campground,2023-08-17,17:46:44.400000,camp,Can replace with firepit,millcreekfire_big.png
+9999999999,43.1058944,-124.4358641,"Face Rock State Scenic Viewpoint, Bandon, OR 97411",Face Rock State Scenic Viewpoint,2023-08-19,12:52:11.695000,Animals,Face Rock,facerock_big.png
+1692467531.695,43.1188889,-124.4133333,"210 2nd St SE, Bandon, OR 97411, USA",Coastal Mist,2023-08-19,12:52:11.695000,coffee,"Amazing patisserie. We had a chocolate cake and baguette. Both were very good. Coffee smells better than it tastes but still okay (fresh coffee always smells good)."5,
+1692475916.455,44.0544792,-124.1075022,"4840 Vist Rd, Florence, OR 97439, USA",Sutton Campground,2023-08-19,15:11:56.455000,camp,,night_big.png
+9999999999,44.0674807,-124.1252805,"Florence, OR 97439",Overlook sunset,2023-08-19,20:40:55.319000,Animals,Sunset overlook,sunset_big.png
+9999999999,44.074894,-124.1314509,"Lane County, OR",Dunes,2023-08-19,15:11:56.455000,Animals,Dunes sand beach,dunes_big.png
+9999999999,45.5056683,-122.6963032,"117 SE Taylor St #101, Portland, OR 97214",Shalom Y’all,2023-08-20,12:30:00.000000,Food,,
+1692576296.37,45.5259553,-122.6818103,"1037 NW Flanders St, Portland, OR 97209, USA",Zabpinto Thai Kitchen,2023-08-20,19:04:56.370000,Food,"Good food with plenty of options."4,
+9999999999,45.5286545,-122.6825101,"1105 NW Johnson St, Portland, OR 97209",Cool Moon Ice Cream,2023-08-20,19:04:56.370000,icecream,,
+9999999999,45.666023,-121.8968517,"425 Wa Na Pa St, Cascade Locks, OR 97014",Change of plans,2023-08-20,13:11:15.713000,Animals,Where we turned around,changeofplans_big.png
+1692625954.53,45.5324934,-122.6812614,"941 NW Overton St, Portland, OR 97209, USA",Ovation Coffee & Tea,2023-08-21,08:52:34.530000,coffee,"Fantastically spiced coffee. Interesting flavor options though they also serve regular coffee. Definitely recommend trying out their Moroccan spiced coffee."5,
+9999999999,45.8981657,-123.9630309,"175 W 2nd St, Cannon Beach, OR 97110",Crepe Neptune,2023-08-21,12:16:42.649000,Food,,
+9999999999,45.8866036,-123.9664718,"US-101, Cannon Beach, OR 97110",Haystack Rock,2023-08-21,12:16:42.649000,Animals,Famous rock,cannonbeach_big.png
+1692645625.893,46.2841576,-124.0575021,"244 Robert Gray Dr, Ilwaco, WA 98624, USA","Cape Disappointment State Park, Campground D",2023-08-21,14:20:25.893000,camp,,disappointmentcamp_big.png
+9999999999,46.2757684,-124.0525462,"Cape Disappointment Lighthouse, Cape Disappointment Trail, Ilwaco, WA 98624",Lighthouse,2023-08-21,14:20:25.893000,Animals,Dolphins,dolphins_big.png
+9999999999,46.286924,-124.0777661,"Ocean Beach School District, WA",Lighthouse on the beach,2023-08-21,18:05:01.910000,Animals,Sunset on the beach or sunset??? Or both??,lighthouse_big.png
+9999999999,47.7090336,-124.419776,Washington 98331,Ruby Beach,2023-08-22,10:35:20.716000,Animals,,rubybeach_big.png
+1692745501.91,48.0701641,-123.9135505,"Port Angeles, WA 98362, USA",Fairholme Campground,2023-08-22,18:05:01.910000,camp,,fairholme_big.png
+1692745501.91,48.0696001,-123.9131011,"221121 US-101, Port Angeles, WA 98363, USA",Fairholme General Store,2023-08-22,18:05:01.910000,Animals,Уточки!,duckling_big.png
+1692830237.555,47.6152519,-124.3758581,"Forks, WA 98331, USA",Kalaloch Campground,2023-08-23,17:37:17.555000,camp,,kalaloch_big.png
+9999999999,47.6178461,-124.3776747,"JJ9C+4W, Forks, WA 98331, USA",Kalaloch Public Beach Access,2023-08-23,17:37:17.555000,Animals,Sea otters and sand dollars,seaotter_big.png
+1692927254.523,47.5145124,-123.3290252,"NF-24, Hoodsport, WA 98548, USA",Staircase Campground,2023-08-24,20:34:14.523000,camp,,staircase_big.png
+9999999999,47.502236,-123.3192853,"NF-2451, Hoodsport, WA 98548",Shady lane,2023-08-24,20:34:14.523000,Animals,Lake Cushant or shady lane creek with beautiful water,cushant_big.png
+9999999999,47.60699,-122.31652,"550 12th Ave, Seattle, WA 98122",Ba Bar Capitol Hill,2023-08-25,13:07:44.424000,Food,"Very tasty food and great atmosphere. Loved this place.",
+9999999999,47.6084639,-122.3399140,"1425 1st Ave, Seattle, WA 98101",Bottega Italiana,2023-08-25,13:07:44.424000,icecream,"Best chocolate ice cream I’ve ever had. And I try a lot of ice cream places"5,
+9999999999,47.6101525,-122.3250934,"1301 Madison St, Seattle, WA 98104",Gyro Saj,2023-08-25,13:07:44.424000,Food,"Really nice and fresh food",
+9999999999,47.614204,-122.3258086,"714 E Pike St Suite A, Seattle, WA 98122",Salt & Straw,2023-08-25,13:07:44.424000,icecream,"Great quality ice cream with interesting flavors. Definitely recommend going here",
+11693058476.648,47.60695,-122.32054,"524 Broadway, Seattle, WA 98122, USA",URL Coffee,2023-08-26,09:01:16.648000,coffee,"Came here for good coffee and was not disappointed.",
+9999999999,47.60634,-122.32057,"512 Broadway, Seattle, WA 98122",QED Coffee,2023-08-26,09:01:16.648000,coffee,"Coffee was good but was missing a menu with options.",
+9999999999,47.611987,-122.3201666,"1001 Broadway, Seattle, WA 98122",Whole Foods,2023-08-26,09:01:16.648000,Food,"Love Whole Foods but they did not have my favorite tea 🥺",
