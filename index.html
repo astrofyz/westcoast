@@ -1,7 +1,8 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <title>westcoastmap</title>
+  <title>West Coast Map</title>
+  <link rel="icon" type="image/x-icon" href="icon/favicon.png">
   <meta http-equiv="Content-Security-Policy" content="upgrade-insecure-requests">
 
   <!-- <link rel="stylesheet" href="http://cdn.leafletjs.com/leaflet-0.7/leaflet.css" /> -->
@@ -180,7 +181,8 @@
   });
 
 
-  var unitRadius = 10;     // The pixel radius of a point of size = 1
+  var unitRadius = window.innerWidth*0.035 // 10;     // The pixel radius of a point of size = 1
+  console.log(unitRadius)
   var backgroundNotes = "url('pattern_orange.png')"
   var backgroundNodes = "pattern_red.png"
 
@@ -673,6 +675,8 @@
 
               var clusters = overlap(allPointsPlaces.filter(item => clickLegend[item.type]))
 
+              // console.log("clusters", clusters.map(d => d.r))
+
               var clusterMarks = g.selectAll(".cluster")
                       .data(clusters.filter(function(d) {return (d.r > unitRadius)}))
                       .join(
@@ -693,10 +697,10 @@
                                 enterSelection.append("circle")
                                         .attr("cx", function (d) { return d.x; })
                                         .attr("cy", function (d) { return d.y; })
-                                        .attr("r", function (d) { return d.r; })
+                                        .attr("r", function (d) { return Math.min(d.r, 1.2*unitRadius); })
                                         // .attr("fill", "blue")
                                         .attr("fill", function(d, i) { return "url(#pattern-" + i + ")"; })
-                                        .attr("opacity", 0.7);
+                                        .attr("opacity", 0.7)
 
                                 enterSelection.append("text")
                                         .text(function (d) {
@@ -720,7 +724,7 @@
                                 update.select("circle")
                                         .attr("cx", function (d) { return d.x; })
                                         .attr("cy", function (d) { return d.y; })
-                                        .attr("r", function (d) { return d.r; });
+                                        .attr("r", function (d) { return Math.min(d.r, 1.2*unitRadius); })
 
                                 update.select("text")
                                         .text(function (d) {
