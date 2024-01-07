@@ -182,7 +182,7 @@
 
 
   var unitRadius = window.innerWidth*0.035 // 10;     // The pixel radius of a point of size = 1
-  console.log(unitRadius)
+  // console.log(unitRadius)
   var backgroundNotes = "url('pattern_orange.png')"
   var backgroundNodes = "pattern_red.png"
 
@@ -198,13 +198,13 @@
   };
 
 
-  var initClusterArray = function(points) {
+  var initClusterArray = function(points, unitR = unitRadius) {
     var clusters = points.map(function(d, i) {
       var p = map.latLngToLayerPoint([d.lat, d.lng]);
       return {
         x: p.x,
         y: p.y,
-        r: unitRadius,
+        r: unitR,
         points: [d]
       };
     });
@@ -217,8 +217,8 @@
   };
 
 
-  var overlap = function(points) {
-    var clusters = initClusterArray(points).map(function(d, i) { d.index = i; return d; })
+  var overlap = function(points, unitR = unitRadius) {
+    var clusters = initClusterArray(points, unitR).map(function(d, i) { d.index = i; return d; })
     maxRadius = d3.max(clusters, function(d) { return d.r; })
     hasClusters = true;
 
@@ -649,6 +649,7 @@
             }
 
             function update() {
+              // console.log(map.getZoom())
               hikeList.forEach(function (hike) {
                 updateElements(
                         allPointsHikes.get((hike.activityID).toString()),
@@ -673,12 +674,16 @@
                 );
               });
 
-              var clusters = overlap(allPointsPlaces.filter(item => clickLegend[item.type]))
+              if (map.getZoom() >= 15) {
+                var clusters = overlap(allPointsPlaces.filter(item => clickLegend[item.type]), 5)
+              }
+              else {var clusters = overlap(allPointsPlaces.filter(item => clickLegend[item.type])) }
 
+              // console.log(clusters)
               // console.log("clusters", clusters.map(d => d.r))
 
               var clusterMarks = g.selectAll(".cluster")
-                      .data(clusters.filter(function(d) {return (d.r > unitRadius)}))
+                      .data(clusters.filter(function(d) {return (d.points.length > 1)}))
                       .join(
                               enter => {
                                 var enterSelection = enter.append("g").attr("class", "cluster");
@@ -739,7 +744,7 @@
 
               var featureId = g.selectAll(".node")
                       .data(clusters.filter(function(d) {
-                        return (d.r === unitRadius);
+                        return (d.points.length === 1);
                       }))
                       .join(
                               enter => {
