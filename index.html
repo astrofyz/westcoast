@@ -280,7 +280,7 @@
     const xExtent = d3.extent(xValues);
     const yExtent = d3.extent(yValues);
 
-    return [[yExtent[0]-0.01, xExtent[0]-0.01], [yExtent[1]+0.01, xExtent[1]+0.01]]
+    return [[yExtent[0], xExtent[0]], [yExtent[1], xExtent[1]]]
   }
 
   var initailZoomLevel = ((window.innerHeight / window.innerWidth) > 1.5) ? 7 : 6
