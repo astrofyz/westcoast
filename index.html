@@ -272,10 +272,21 @@
     return clusters.filter(function(v) { return !!v; });
   };
 
+  var boundBox = function(points) {
+    const xValues = points.map(point => point.lng);
+    const yValues = points.map(point => point.lat);
+
+// Find the minimum and maximum values for x and y
+    const xExtent = d3.extent(xValues);
+    const yExtent = d3.extent(yValues);
+
+    return [[yExtent[0]-0.01, xExtent[0]-0.01], [yExtent[1]+0.01, xExtent[1]+0.01]]
+  }
+
   var initailZoomLevel = ((window.innerHeight / window.innerWidth) > 1.5) ? 7 : 6
   var initialCenterCrd = ((window.innerHeight / window.innerWidth) > 1.5) ? [43.281204464332774, -122.65136718750001] : [44.070714,-124.115619]
 
-  var map = L.map('map').setView(initialCenterCrd, initailZoomLevel);
+  var map = L.map('map', {zoomSnap: 1.0}).setView(initialCenterCrd, initailZoomLevel);
   // var map = L.map('map').setView([38.027336, -122.826623], 13.01);
 
   L.tileLayer.provider('Stadia.StamenWatercolor').addTo(map);
@@ -686,7 +697,9 @@
                       .data(clusters.filter(function(d) {return (d.points.length > 1)}))
                       .join(
                               enter => {
-                                var enterSelection = enter.append("g").attr("class", "cluster");
+                                var enterSelection = enter.append("g")
+                                        .attr("class", "cluster")
+                                        .style("pointer-events", "all")
 
                                 enterSelection.append("defs")
                                         .append("pattern")
@@ -706,6 +719,12 @@
                                         // .attr("fill", "blue")
                                         .attr("fill", function(d, i) { return "url(#pattern-" + i + ")"; })
                                         .attr("opacity", 0.7)
+                                        .on("click", function (d, event) {
+                                          // Handle click event here
+                                          // console.log("Marker clicked:", boundBox(d.points));
+                                          d3.selectAll(".cluster").remove()
+                                          map.flyToBounds(boundBox(d.points), maxZoom=13);
+                                        });
 
                                 enterSelection.append("text")
                                         .text(function (d) {
@@ -730,6 +749,11 @@
                                         .attr("cx", function (d) { return d.x; })
                                         .attr("cy", function (d) { return d.y; })
                                         .attr("r", function (d) { return Math.min(d.r, 1.2*unitRadius); })
+                                        .on("click", function (d, event) {
+                                          // Handle click event here
+                                          d3.selectAll(".cluster").remove()
+                                          map.flyToBounds(boundBox(d.points), maxZoom=13);
+                                        });
 
                                 update.select("text")
                                         .text(function (d) {
