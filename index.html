@@ -280,6 +280,9 @@
     const xExtent = d3.extent(xValues);
     const yExtent = d3.extent(yValues);
 
+    // console.log(xExtent, yExtent)
+    // console.log(map._getBoundsCenterZoom([[yExtent[0], xExtent[0]], [yExtent[1], xExtent[1]]]))
+
     return [[yExtent[0], xExtent[0]], [yExtent[1], xExtent[1]]]
   }
 
@@ -660,7 +663,7 @@
             }
 
             function update() {
-              // console.log(map.getZoom())
+              // console.log(map.getZoom(), map.getBounds())
               hikeList.forEach(function (hike) {
                 updateElements(
                         allPointsHikes.get((hike.activityID).toString()),
@@ -723,7 +726,7 @@
                                           // Handle click event here
                                           // console.log("Marker clicked:", boundBox(d.points));
                                           d3.selectAll(".cluster").remove()
-                                          map.flyToBounds(boundBox(d.points), maxZoom=13);
+                                          map.flyToBounds(boundBox(d.points), maxZoom=13, padding=["7vw", "7vw"]);
                                         });
 
                                 enterSelection.append("text")
@@ -752,7 +755,7 @@
                                         .on("click", function (d, event) {
                                           // Handle click event here
                                           d3.selectAll(".cluster").remove()
-                                          map.flyToBounds(boundBox(d.points), maxZoom=13);
+                                          map.flyToBounds(boundBox(d.points), maxZoom=13, padding=["7vw", "7vw"]);
                                         });
 
                                 update.select("text")
