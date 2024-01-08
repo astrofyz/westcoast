@@ -726,7 +726,7 @@
                                           // Handle click event here
                                           // console.log("Marker clicked:", boundBox(d.points));
                                           d3.selectAll(".cluster").remove()
-                                          map.flyToBounds(boundBox(d.points), maxZoom=13, padding=["7vw", "7vw"]);
+                                          map.flyToBounds(boundBox(d.points), maxZoom=13); //, padding=["7vw", "7vw"]);
                                         });
 
                                 enterSelection.append("text")
@@ -755,7 +755,7 @@
                                         .on("click", function (d, event) {
                                           // Handle click event here
                                           d3.selectAll(".cluster").remove()
-                                          map.flyToBounds(boundBox(d.points), maxZoom=13, padding=["7vw", "7vw"]);
+                                          map.flyToBounds(boundBox(d.points), maxZoom=13); //, padding=["7vw", "7vw"]);
                                         });
 
                                 update.select("text")
